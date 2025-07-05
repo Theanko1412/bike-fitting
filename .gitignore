@@ -9,14 +9,14 @@ count.txt
 .tanstack
 
 
-/fe/node_modules
-/fe/.DS_Store
-/fe/dist
-/fe/dist-ssr
-/fe/*.local
-/fe/count.txt
-/fe/.env
-/fe/.nitro
-/fe/.tanstack
+/fe/bikefitting-fe/node_modules
+/fe/bikefitting-fe/.DS_Store
+/fe/bikefitting-fe/dist
+/fe/bikefitting-fe/dist-ssr
+/fe/bikefitting-fe/*.local
+/fe/bikefitting-fe/count.txt
+/fe/bikefitting-fe/.env
+/fe/bikefitting-fe/.nitro
+/fe/bikefitting-fe/.tanstack
 
 /junk
