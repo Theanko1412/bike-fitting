@@ -161,7 +161,10 @@ export class BikeFittingService {
 	/**
 	 * Download PDF for a record
 	 */
-	static async downloadPdf(id: number | string): Promise<void> {
+	static async downloadPdf(
+		id: number | string,
+		record?: { fullName: string; date: string },
+	): Promise<void> {
 		const url = buildApiUrl(`${API_CONFIG.endpoints.records}/${id}/pdf`);
 
 		try {
@@ -175,9 +178,17 @@ export class BikeFittingService {
 				throw new Error(errorMessage);
 			}
 
+			// Generate fallback filename using same logic as backend
+			let fallbackFilename = "bike-fitting-report.pdf";
+			if (record) {
+				const cleanFullName = record.fullName.replace(/ /g, ""); // Remove all spaces like backend
+				const dateString = record.date; // Already in yyyy-mm-dd format
+				fallbackFilename = `${cleanFullName}-${dateString}-bike-fitting-report.pdf`;
+			}
+
 			// Get the filename from Content-Disposition header
 			const contentDisposition = response.headers.get("Content-Disposition");
-			let filename = "bike-fitting-report.pdf";
+			let filename = fallbackFilename;
 
 			console.log("Content-Disposition header:", contentDisposition); // Debug log
 
@@ -199,10 +210,18 @@ export class BikeFittingService {
 					filename = filenameMatch[1].trim();
 					console.log("Extracted filename:", filename); // Debug log
 				} else {
-					console.log("No filename match found in:", contentDisposition); // Debug log
+					console.log(
+						"No filename match found in:",
+						contentDisposition,
+						"- using fallback:",
+						fallbackFilename,
+					); // Debug log
 				}
 			} else {
-				console.log("No Content-Disposition header found"); // Debug log
+				console.log(
+					"No Content-Disposition header found - using fallback:",
+					fallbackFilename,
+				); // Debug log
 			}
 
 			// Create blob and download

@@ -123,7 +123,10 @@ export default function SearchPage() {
 		}
 
 		try {
-			await BikeFittingService.downloadPdf(record.id);
+			await BikeFittingService.downloadPdf(record.id, {
+				fullName: record.fullName,
+				date: record.date,
+			});
 			toast.success("PDF downloaded successfully", {
 				description: `Downloaded bike fitting report for ${record.fullName}`,
 				duration: 3000,
