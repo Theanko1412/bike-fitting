@@ -8,7 +8,7 @@ import {
 	pedalBrands,
 	ranges,
 } from "@/config/form-config";
-import { fileToBase64 } from "@/lib/utils";
+import { bikeFittingImageToBase64 } from "@/lib/utils";
 
 interface InitialBikeMeasurementStepProps {
 	formData: any;
@@ -232,7 +232,7 @@ export function InitialBikeMeasurementStep({
 						const file = e.target.files?.[0];
 						if (file) {
 							try {
-								const base64 = await fileToBase64(file);
+								const base64 = await bikeFittingImageToBase64(file);
 								handleInputChange("initialRiderPhoto", base64);
 							} catch (error) {
 								console.error("Error converting file to base64:", error);
@@ -247,7 +247,7 @@ export function InitialBikeMeasurementStep({
 						<img
 							src={formData.initialRiderPhoto}
 							alt="Initial rider photo"
-							className="max-w-32 max-h-32 object-cover rounded border"
+							className="object-contain rounded border"
 						/>
 					</div>
 				)}

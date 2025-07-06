@@ -29,6 +29,11 @@ dependencies {
 	runtimeOnly("org.postgresql:postgresql")
 	//h2
 	implementation("com.h2database:h2")
+	
+	// PDF generation dependencies
+	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+	implementation("org.xhtmlrenderer:flying-saucer-pdf:9.1.22")
+	
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testImplementation("org.springframework.security:spring-security-test")

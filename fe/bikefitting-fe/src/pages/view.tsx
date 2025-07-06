@@ -9,6 +9,7 @@ import {
 	Download,
 	FileText,
 	Image as ImageIcon,
+	Mail,
 	User,
 	X,
 } from "lucide-react";
@@ -80,12 +81,16 @@ export default function ViewPage() {
 
 		try {
 			await BikeFittingService.downloadPdf(record.id);
+			toast.success("PDF downloaded successfully", {
+				description: "The bike fitting report has been downloaded",
+				duration: 3000,
+			});
 		} catch (error) {
-			toast.error("Failed to download file", {
+			toast.error("Failed to download PDF", {
 				description:
 					error instanceof Error
 						? error.message
-						: "An unexpected error occurred",
+						: "An unexpected error occurred while downloading the PDF",
 				duration: 5000,
 			});
 		}
@@ -134,18 +139,9 @@ export default function ViewPage() {
 			Object.entries(data).filter(([key]) => !excludeFields.includes(key)),
 		);
 
-		// Add record metadata
-		const csvData = {
-			recordId: record?.id,
-			fullName: record?.fullName,
-			fitterFullName: record?.fitterFullName,
-			date: record?.date,
-			...filteredData,
-		};
-
 		// Create CSV headers and values
-		const headers = Object.keys(csvData);
-		const values = Object.values(csvData).map((value) => {
+		const headers = Object.keys(filteredData);
+		const values = Object.values(filteredData).map((value) => {
 			// Handle values that might contain commas or quotes
 			if (
 				typeof value === "string" &&
@@ -187,6 +183,37 @@ export default function ViewPage() {
 		}
 	};
 
+	const downloadJSONData = () => {
+		if (!record) return;
+
+		try {
+			// Keep JSON as raw form data (as received on frontend)
+			const jsonString = JSON.stringify(record.jsonForm, null, 2);
+
+			// Format date for filename (YYYY-MM-DD)
+			const dateStr = new Date(record.date).toISOString().split("T")[0];
+			const cleanName = record.fullName.replace(/\s+/g, "");
+			const filename = `${cleanName}-${dateStr}-bike-fitting.json`;
+
+			const blob = new Blob([jsonString], {
+				type: "application/json;charset=utf-8;",
+			});
+			const link = document.createElement("a");
+			link.href = URL.createObjectURL(blob);
+			link.download = filename;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+
+			toast.success("JSON file downloaded successfully");
+		} catch (error) {
+			toast.error("Failed to download JSON file", {
+				description: "Could not download JSON data",
+				duration: 5000,
+			});
+		}
+	};
+
 	// Helper to calculate and display difference
 	const getDifference = (finalVal: any, initialVal: any) => {
 		if (!finalVal || !initialVal) return null;
@@ -205,6 +232,15 @@ export default function ViewPage() {
 				{diff}
 			</span>
 		);
+	};
+
+	// Helper to create mailto URL with pre-filled content
+	const createMailtoUrl = (email: string) => {
+		const subject = `Bike Fitting Report - #${record?.id} - ${formatDate(record?.date || "")}`;
+		const body = "this is test message";
+
+		const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+		return mailtoUrl;
 	};
 
 	if (isLoading) {
@@ -272,12 +308,13 @@ export default function ViewPage() {
 						<h1 className="text-2xl font-bold">Bike Fitting Record</h1>
 					</div>
 					<Button
-						variant="outline"
-						onClick={downloadCSVData}
+						variant="default"
+						onClick={handleDownload}
+						disabled={!record.pdfFile}
 						className="flex items-center gap-2"
 					>
 						<Download className="h-4 w-4" />
-						CSV
+						PDF
 					</Button>
 				</div>
 
@@ -307,7 +344,13 @@ export default function ViewPage() {
 								<label className="text-sm font-medium text-muted-foreground">
 									Email
 								</label>
-								<p className="text-lg">{formData.email}</p>
+								<a
+									href={createMailtoUrl(formData.email)}
+									className="text-lg text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-2 transition-colors cursor-pointer"
+								>
+									<Mail className="h-4 w-4" />
+									{formData.email}
+								</a>
 							</div>
 							<div>
 								<label className="text-sm font-medium text-muted-foreground">
@@ -326,9 +369,9 @@ export default function ViewPage() {
 							</div>
 							<div>
 								<label className="text-sm font-medium text-muted-foreground">
-									Record ID
+									Fitting ID
 								</label>
-								<p className="text-lg font-mono">{record.id}</p>
+								<p className="text-lg font-mono">#{record.id}</p>
 							</div>
 							<div>
 								<label className="text-sm font-medium text-muted-foreground">
@@ -368,33 +411,6 @@ export default function ViewPage() {
 								)}
 							</div>
 						)}
-					</CardContent>
-				</Card>
-
-				{/* PDF Download */}
-				<Card>
-					<CardHeader>
-						<CardTitle className="flex items-center gap-2">
-							<FileText className="h-5 w-5" />
-							PDF Report
-						</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<div className="flex gap-2">
-							<Button
-								onClick={handleDownload}
-								disabled={!record.pdfFile}
-								className="flex items-center gap-2"
-							>
-								<Download className="h-4 w-4" />
-								Download PDF Report
-							</Button>
-							{!record.pdfFile && (
-								<p className="text-sm text-muted-foreground self-center">
-									No PDF file available
-								</p>
-							)}
-						</div>
 					</CardContent>
 				</Card>
 
@@ -891,6 +907,49 @@ export default function ViewPage() {
 						</div>
 					</CardContent>
 				</Card>
+
+				{/* Download Data */}
+				<Card>
+					<CardHeader>
+						<CardTitle className="flex items-center gap-2">
+							<Download className="h-5 w-5" />
+							Download Data
+						</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<div className="flex flex-wrap gap-2">
+							<Button
+								onClick={handleDownload}
+								disabled={!record.pdfFile}
+								className="flex items-center gap-2"
+							>
+								<FileText className="h-4 w-4" />
+								Download PDF Report
+							</Button>
+							<Button
+								variant="outline"
+								onClick={downloadCSVData}
+								className="flex items-center gap-2"
+							>
+								<Download className="h-4 w-4" />
+								Download CSV
+							</Button>
+							<Button
+								variant="outline"
+								onClick={downloadJSONData}
+								className="flex items-center gap-2"
+							>
+								<Download className="h-4 w-4" />
+								Download JSON
+							</Button>
+						</div>
+						{!record.pdfFile && (
+							<p className="text-sm text-muted-foreground mt-2">
+								PDF report not available for this record
+							</p>
+						)}
+					</CardContent>
+				</Card>
 			</div>
 
 			{/* Image Viewer Modal */}
@@ -898,33 +957,54 @@ export default function ViewPage() {
 				open={!!selectedImage}
 				onOpenChange={() => setSelectedImage(null)}
 			>
-				<DialogContent className="max-w-[95vw] max-h-[95vh] p-2">
+				<DialogContent
+					className="p-0 w-auto max-w-[calc(100vw-0.5rem)] sm:max-w-[calc(100vw-1rem)]"
+					showCloseButton={false}
+					style={{
+						height: "auto",
+						maxHeight: "calc(100vh - 0.5rem)",
+						minHeight: "auto",
+					}}
+				>
 					<DialogTitle className="sr-only">
 						{selectedImage?.title || "Image Viewer"}
 					</DialogTitle>
 
 					{selectedImage && (
-						<div className="relative w-full h-full flex items-center justify-center">
+						<div className="relative p-2 sm:p-4">
 							<Button
 								variant="outline"
 								size="sm"
-								className="absolute top-2 right-2 z-10 bg-background/80 backdrop-blur-sm"
+								className="absolute top-1 right-1 sm:top-2 sm:right-2 z-10"
 								onClick={() => setSelectedImage(null)}
+								style={{
+									backgroundColor: "rgba(0, 0, 0, 0.8)",
+									borderColor: "rgba(0, 0, 0, 0.8)",
+									color: "white",
+								}}
+								onMouseEnter={(e) => {
+									e.currentTarget.style.backgroundColor = "rgba(0, 0, 0, 0.9)";
+								}}
+								onMouseLeave={(e) => {
+									e.currentTarget.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+								}}
 							>
 								<X className="h-4 w-4" />
 							</Button>
 
-							<img
-								src={selectedImage.src}
-								alt={selectedImage.title}
-								className="max-w-full max-h-[90vh] object-contain rounded-lg"
-								onClick={(e) => e.stopPropagation()}
-							/>
+							<div className="flex flex-col">
+								<img
+									src={selectedImage.src}
+									alt={selectedImage.title}
+									className="rounded-lg block max-w-[calc(100vw-1.5rem)] max-h-[calc(100vh-4rem)] sm:max-w-[calc(100vw-3rem)] sm:max-h-[calc(100vh-6rem)] w-auto h-auto"
+									onClick={(e) => e.stopPropagation()}
+								/>
 
-							<div className="absolute bottom-2 left-2 right-2 bg-background/80 backdrop-blur-sm rounded-lg p-2">
-								<p className="text-sm font-medium text-center">
-									{selectedImage.title}
-								</p>
+								<div className="mt-2 sm:mt-3 bg-muted/50 rounded-lg p-2">
+									<p className="text-xs sm:text-sm font-medium text-center">
+										{selectedImage.title}
+									</p>
+								</div>
 							</div>
 						</div>
 					)}

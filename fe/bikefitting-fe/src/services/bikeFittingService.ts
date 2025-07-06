@@ -84,7 +84,10 @@ export class BikeFittingService {
 					...record,
 					id: record.id, // Keep as number
 					date: new Date(record.date).toISOString().split("T")[0], // Convert LocalDate to string
-					hasFile: record.pdfFile != null, // Derive from pdfFile
+					hasFile:
+						record.hasFile !== undefined
+							? record.hasFile
+							: record.pdfFile != null, // Use existing hasFile or derive from pdfFile
 				})),
 			};
 
@@ -156,20 +159,65 @@ export class BikeFittingService {
 	}
 
 	/**
-	 * Download PDF for a record (placeholder for future implementation)
+	 * Download PDF for a record
 	 */
-	static async downloadPdf(id: number): Promise<Blob> {
+	static async downloadPdf(id: number | string): Promise<void> {
 		const url = buildApiUrl(`${API_CONFIG.endpoints.records}/${id}/pdf`);
 
 		try {
 			const response = await fetch(url);
 
 			if (!response.ok) {
+				if (response.status === 404) {
+					throw new Error("PDF file not found for this record");
+				}
 				const errorMessage = await parseErrorResponse(response);
 				throw new Error(errorMessage);
 			}
 
-			return await response.blob();
+			// Get the filename from Content-Disposition header
+			const contentDisposition = response.headers.get("Content-Disposition");
+			let filename = "bike-fitting-report.pdf";
+
+			console.log("Content-Disposition header:", contentDisposition); // Debug log
+
+			if (contentDisposition) {
+				// Try multiple patterns to extract filename
+				let filenameMatch = contentDisposition.match(
+					/filename\*?=['"]?([^'";]+)['"]?/i,
+				);
+				if (!filenameMatch) {
+					filenameMatch = contentDisposition.match(
+						/filename=['"]?([^'";]+)['"]?/i,
+					);
+				}
+				if (!filenameMatch) {
+					filenameMatch = contentDisposition.match(/filename=([^;,\s]+)/i);
+				}
+
+				if (filenameMatch) {
+					filename = filenameMatch[1].trim();
+					console.log("Extracted filename:", filename); // Debug log
+				} else {
+					console.log("No filename match found in:", contentDisposition); // Debug log
+				}
+			} else {
+				console.log("No Content-Disposition header found"); // Debug log
+			}
+
+			// Create blob and download
+			const blob = await response.blob();
+			const downloadUrl = window.URL.createObjectURL(blob);
+
+			const link = document.createElement("a");
+			link.href = downloadUrl;
+			link.download = filename;
+			document.body.appendChild(link);
+			link.click();
+
+			// Cleanup
+			document.body.removeChild(link);
+			window.URL.revokeObjectURL(downloadUrl);
 		} catch (error) {
 			console.error("Failed to download PDF:", error);
 			throw error;

@@ -7,7 +7,7 @@ function App() {
 		<div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-8">
 			<div className="text-center space-y-8">
 				<div className="space-y-2">
-					<h1 className="text-4xl font-bold">Welcome</h1>
+					<h1 className="text-4xl font-bold">SeginBikeFit</h1>
 					<p className="text-muted-foreground">Choose your destination</p>
 				</div>
 

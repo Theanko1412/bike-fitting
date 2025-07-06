@@ -124,12 +124,16 @@ export default function SearchPage() {
 
 		try {
 			await BikeFittingService.downloadPdf(record.id);
+			toast.success("PDF downloaded successfully", {
+				description: `Downloaded bike fitting report for ${record.fullName}`,
+				duration: 3000,
+			});
 		} catch (error) {
-			toast.error("Failed to download file", {
+			toast.error("Failed to download PDF", {
 				description:
 					error instanceof Error
 						? error.message
-						: "An unexpected error occurred",
+						: "An unexpected error occurred while downloading the PDF",
 				duration: 5000,
 			});
 		}
@@ -169,15 +173,16 @@ export default function SearchPage() {
 						{record.hasFile && (
 							<Button
 								variant="outline"
-								size="lg"
+								size="sm"
 								onClick={(e) => {
 									e.preventDefault();
 									e.stopPropagation();
 									handleDownload(record);
 								}}
-								className="h-8 w-8 p-0"
+								className="flex items-center gap-1"
 							>
 								<Download className="h-3 w-3" />
+								Download PDF
 							</Button>
 						)}
 					</div>
