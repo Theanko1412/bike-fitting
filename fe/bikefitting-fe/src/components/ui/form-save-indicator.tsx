@@ -106,6 +106,7 @@ export function FormSaveIndicator({
 			>
 				<DialogContent
 					className="sm:max-w-md"
+					showCloseButton={false}
 					onPointerDownOutside={(e) => e.preventDefault()}
 				>
 					<DialogHeader>
@@ -119,9 +120,8 @@ export function FormSaveIndicator({
 							available. Would you like to restore your previous work or start
 							fresh?
 							<br />
-							<span className="text-xs text-muted-foreground/80 mt-1 block">
-								Note: Images and fitter field are not saved and will need to be
-								set again.
+							<span className="text-md text-muted-foreground/80 mt-1 block">
+								Note: Images are not saved and will need to be set again.
 							</span>
 						</DialogDescription>
 					</DialogHeader>

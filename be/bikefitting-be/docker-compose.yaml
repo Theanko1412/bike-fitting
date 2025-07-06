@@ -1,0 +1,11 @@
+
+services:
+  db:
+    image: postgres:latest
+    container_name: postgres_container
+    environment:
+      POSTGRES_USER: bikefitting
+      POSTGRES_PASSWORD: bikefitting
+      POSTGRES_DB: bikefitting
+    ports:
+      - "5433:5432"

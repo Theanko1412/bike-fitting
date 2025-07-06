@@ -168,6 +168,7 @@ export const getDefaultFormData = () => ({
 	torsoRight: "",
 	advActiveHipROMLeft: 90, // middle of 0-180
 	advActiveHipROMRight: 90,
+	forwardSpinalFlexionPhoto: "", // Full body assessment spinal flexion photo
 
 	// Step 2: Initial Bike Measurement
 	bikeBrand: "Trek",
@@ -192,6 +193,7 @@ export const getDefaultFormData = () => ({
 	footbedLeft: "",
 	footbedRight: "",
 	crankLength: 172.5, // common default
+	initialRiderPhoto: "", // Initial bike measurement rider photo
 
 	// Step 3: Final Bike Measurement
 	finalBikeBrand: "Trek",
@@ -216,6 +218,7 @@ export const getDefaultFormData = () => ({
 	finalFootbedLeft: "",
 	finalFootbedRight: "",
 	finalCrankLength: 172.5, // common default
+	finalRiderPhoto: "", // Final bike measurement rider photo
 
 	// Step 4: Shoe Setup
 	forefootWedgeLeft: "",

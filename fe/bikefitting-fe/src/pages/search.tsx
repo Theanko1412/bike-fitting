@@ -1,9 +1,17 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Download, Search } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { ThemeToggle } from "../components/theme-toggle";
+import {
+	ArrowLeft,
+	Calendar,
+	Download,
+	FileText,
+	RefreshCw,
+	Search,
+	User,
+} from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { toast } from "sonner";
 import { Button } from "../components/ui/button";
 import {
 	Card,
@@ -12,219 +20,80 @@ import {
 	CardTitle,
 } from "../components/ui/card";
 import { Input } from "../components/ui/input";
+import { formatDate } from "../lib/utils";
+import {
+	type BikeFittingRecord,
+	BikeFittingService,
+} from "../services/bikeFittingService";
 
-// Mock data structure for the bike fitting records
-interface BikeFittingRecord {
-	id: string;
-	fullName: string;
-	date: string;
-}
+const ITEMS_PER_PAGE = 50;
 
-// Generate thousands of mock records programmatically
-const generateMockData = (count: number): BikeFittingRecord[] => {
-	const firstNames = [
-		"John",
-		"Jane",
-		"Mike",
-		"Sarah",
-		"David",
-		"Lisa",
-		"Tom",
-		"Anna",
-		"Chris",
-		"Emma",
-		"James",
-		"Maria",
-		"Robert",
-		"Linda",
-		"Michael",
-		"Patricia",
-		"Christopher",
-		"Barbara",
-		"Daniel",
-		"Nancy",
-		"Matthew",
-		"Betty",
-		"Anthony",
-		"Helen",
-		"Mark",
-		"Sandra",
-		"Donald",
-		"Donna",
-		"Steven",
-		"Carol",
-		"Paul",
-		"Ruth",
-		"Andrew",
-		"Sharon",
-		"Joshua",
-		"Michelle",
-		"Kenneth",
-		"Laura",
-		"Kevin",
-		"Sarah",
-		"Brian",
-		"Kimberly",
-		"George",
-		"Deborah",
-		"Timothy",
-		"Dorothy",
-		"Ronald",
-		"Lisa",
-		"Jason",
-		"Nancy",
-	];
-
-	const lastNames = [
-		"Smith",
-		"Johnson",
-		"Williams",
-		"Brown",
-		"Jones",
-		"Garcia",
-		"Miller",
-		"Davis",
-		"Rodriguez",
-		"Martinez",
-		"Hernandez",
-		"Lopez",
-		"Gonzalez",
-		"Wilson",
-		"Anderson",
-		"Thomas",
-		"Taylor",
-		"Moore",
-		"Jackson",
-		"Martin",
-		"Lee",
-		"Perez",
-		"Thompson",
-		"White",
-		"Harris",
-		"Sanchez",
-		"Clark",
-		"Ramirez",
-		"Lewis",
-		"Robinson",
-		"Walker",
-		"Young",
-		"Allen",
-		"King",
-		"Wright",
-		"Scott",
-		"Torres",
-		"Nguyen",
-		"Hill",
-		"Flores",
-		"Green",
-		"Adams",
-		"Nelson",
-		"Baker",
-		"Hall",
-		"Rivera",
-		"Campbell",
-		"Mitchell",
-		"Carter",
-		"Roberts",
-		"Gomez",
-		"Phillips",
-		"Evans",
-	];
-
-	const records: BikeFittingRecord[] = [];
-
-	for (let i = 0; i < count; i++) {
-		const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-		const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-
-		// Generate random date between 2023-01-01 and 2024-12-31
-		const startDate = new Date("2023-01-01");
-		const endDate = new Date("2024-12-31");
-		const randomTime =
-			startDate.getTime() +
-			Math.random() * (endDate.getTime() - startDate.getTime());
-		const randomDate = new Date(randomTime);
-
-		records.push({
-			id: `${i + 1}`,
-			fullName: `${firstName} ${lastName}`,
-			date: randomDate.toISOString().split("T")[0], // Format as YYYY-MM-DD
-		});
-	}
-
-	return records;
-};
-
-// Generate 5000 mock records
-const mockData = generateMockData(5000);
-
-// Mock API function to simulate backend data fetching
-const fetchBikeFittingRecords = async ({
-	pageParam = 0,
-	searchTerm = "",
-}: {
-	pageParam?: number;
-	searchTerm?: string;
-}): Promise<{
-	data: BikeFittingRecord[];
-	nextPage: number | null;
-	hasMore: boolean;
-}> => {
-	// Simulate API delay
-	await new Promise((resolve) => setTimeout(resolve, 300));
-
-	// Filter data based on search term
-	const filteredData = mockData.filter((record) =>
-		record.fullName.toLowerCase().includes(searchTerm.toLowerCase()),
-	);
-
-	// Simulate pagination
-	const pageSize = 50; // Increased page size for better performance with virtualization
-	const startIndex = pageParam * pageSize;
-	const endIndex = startIndex + pageSize;
-	const paginatedData = filteredData.slice(startIndex, endIndex);
-
-	return {
-		data: paginatedData,
-		nextPage: endIndex < filteredData.length ? pageParam + 1 : null,
-		hasMore: endIndex < filteredData.length,
-	};
-};
-
-export function SearchPage() {
+export default function SearchPage() {
 	const [searchTerm, setSearchTerm] = useState("");
-	const [activeSearch, setActiveSearch] = useState("");
-	const navigate = useNavigate();
-	const parentRef = useRef<HTMLDivElement>(null);
+	const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
+	// Debounce search term
+	React.useEffect(() => {
+		const timer = setTimeout(() => {
+			setDebouncedSearchTerm(searchTerm);
+		}, 300);
+
+		return () => clearTimeout(timer);
+	}, [searchTerm]);
 
 	const {
 		data,
+		error,
 		fetchNextPage,
 		hasNextPage,
 		isFetchingNextPage,
 		isLoading,
-		error,
+		isError,
+		refetch,
+		isRefetching,
 	} = useInfiniteQuery({
-		queryKey: ["bikeFittingRecords", activeSearch],
-		queryFn: ({ pageParam = 0 }) =>
-			fetchBikeFittingRecords({ pageParam, searchTerm: activeSearch }),
-		getNextPageParam: (lastPage) => lastPage.nextPage,
+		queryKey: ["bikeFittingRecords", debouncedSearchTerm],
+		queryFn: async ({ pageParam }) => {
+			try {
+				return await BikeFittingService.searchRecords({
+					page: pageParam,
+					size: ITEMS_PER_PAGE,
+					search: debouncedSearchTerm,
+				});
+			} catch (error) {
+				// Only show error toast for API failures
+				toast.error("Failed to fetch records", {
+					description:
+						error instanceof Error
+							? error.message
+							: "An unexpected error occurred",
+					duration: 5000,
+				});
+				throw error;
+			}
+		},
+		getNextPageParam: (lastPage) => {
+			return lastPage.hasMore ? lastPage.nextPage : undefined;
+		},
 		initialPageParam: 0,
+		staleTime: 30 * 1000,
+		gcTime: 10 * 60 * 1000, // 10 minutes
 	});
 
-	// Flatten all pages data
-	const allRecords = data?.pages.flatMap((page) => page.data) ?? [];
+	const allRecords = useMemo(() => {
+		return data?.pages.flatMap((page) => page.data) ?? [];
+	}, [data]);
 
-	// Set up virtualizer
+	const parentRef = React.useRef<HTMLDivElement>(null);
+
 	const virtualizer = useVirtualizer({
-		count: allRecords.length,
+		count: hasNextPage ? allRecords.length + 1 : allRecords.length,
 		getScrollElement: () => parentRef.current,
-		estimateSize: () => 60, // Estimated row height
+		estimateSize: () => 80,
 		overscan: 5,
 	});
 
-	// Handle infinite scroll
-	useEffect(() => {
+	React.useEffect(() => {
 		const [lastItem] = [...virtualizer.getVirtualItems()].reverse();
 
 		if (!lastItem) return;
@@ -244,82 +113,132 @@ export function SearchPage() {
 		virtualizer.getVirtualItems(),
 	]);
 
-	const handleSearch = () => {
-		setActiveSearch(searchTerm);
-	};
+	const handleDownload = async (record: BikeFittingRecord) => {
+		if (!record.hasFile) {
+			toast.warning("No file available for download", {
+				description: "This record does not have an associated PDF file",
+				duration: 5000,
+			});
+			return;
+		}
 
-	const handleKeyPress = (e: React.KeyboardEvent) => {
-		if (e.key === "Enter") {
-			handleSearch();
+		try {
+			await BikeFittingService.downloadPdf(record.id);
+		} catch (error) {
+			toast.error("Failed to download file", {
+				description:
+					error instanceof Error
+						? error.message
+						: "An unexpected error occurred",
+				duration: 5000,
+			});
 		}
 	};
 
-	const handleRowClick = (id: string) => {
-		navigate({ to: `/view/${id}` });
-	};
+	const getRowContent = (index: number) => {
+		const record = allRecords[index];
 
-	const handleDownload = (e: React.MouseEvent, id: string) => {
-		e.stopPropagation(); // Prevent row click when clicking download
-		// TODO: Implement download functionality
-		console.log(`Download clicked for record ${id}`);
+		if (!record) {
+			return (
+				<div className="flex items-center justify-center py-4">
+					<div className="text-sm text-muted-foreground">Loading...</div>
+				</div>
+			);
+		}
+
+		return (
+			<Link
+				to="/view/$id"
+				params={{ id: record.id.toString() }}
+				className="block hover:bg-muted/50 transition-colors rounded-md p-3 mx-2"
+			>
+				<div className="flex items-center justify-between">
+					<div className="flex items-center gap-3 min-w-0 flex-1">
+						<div className="flex-shrink-0">
+							<User className="h-4 w-4 text-muted-foreground" />
+						</div>
+						<div className="min-w-0 flex-1">
+							<div className="font-medium truncate">{record.fullName}</div>
+							<div className="flex items-center gap-1 text-sm text-muted-foreground">
+								<Calendar className="h-3 w-3" />
+								{formatDate(record.date)}
+							</div>
+						</div>
+					</div>
+					<div className="flex items-center gap-2 flex-shrink-0">
+						{record.hasFile && (
+							<Button
+								variant="outline"
+								size="lg"
+								onClick={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+									handleDownload(record);
+								}}
+								className="h-8 w-8 p-0"
+							>
+								<Download className="h-3 w-3" />
+							</Button>
+						)}
+					</div>
+				</div>
+			</Link>
+		);
 	};
 
 	return (
-		<div className="min-h-screen bg-background text-foreground py-8 px-4">
-			<div className="max-w-6xl mx-auto space-y-6">
-				<div className="flex items-center justify-between">
-					<h1 className="text-3xl font-bold">Search Bike Fitting Records</h1>
-					<ThemeToggle />
-				</div>
-
+		<div className="min-h-screen bg-background text-foreground p-4">
+			<div className="max-w-4xl mx-auto">
 				<Card>
 					<CardHeader>
-						<CardTitle>Search Records</CardTitle>
+						<CardTitle className="flex items-center gap-2">
+							<Button variant="outline" asChild>
+								<Link to="/">
+									<ArrowLeft className="h-4 w-4" />
+								</Link>
+							</Button>
+							<h1 className="text-3xl font-bold">Search Bike Fittings</h1>
+						</CardTitle>
 					</CardHeader>
-					<CardContent className="space-y-6">
-						{/* Search Section */}
+					<CardContent className="space-y-4">
 						<div className="flex gap-2">
 							<Input
 								placeholder="Search by name..."
 								value={searchTerm}
 								onChange={(e) => setSearchTerm(e.target.value)}
-								onKeyPress={handleKeyPress}
 								className="flex-1"
 							/>
-							<Button onClick={handleSearch} disabled={isLoading}>
-								<Search className="h-4 w-4 mr-2" />
-								Search
-							</Button>
 						</div>
 
-						{/* Virtualized Table */}
-						<div className="border rounded-lg overflow-hidden">
-							{/* Table Header */}
-							<div className="bg-muted/50 border-b">
-								<div className="grid grid-cols-12 gap-4 p-4 font-medium">
-									<div className="col-span-5">Full Name</div>
-									<div className="col-span-5">Date</div>
-									<div className="col-span-2 text-center">Pdf</div>
-								</div>
+						{isError && (
+							<div className="text-center py-8 text-destructive">
+								<FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+								<p>Failed to load records. Please try again.</p>
 							</div>
+						)}
 
-							{/* Virtualized Content */}
-							<div ref={parentRef} className="h-96 overflow-auto">
-								{isLoading ? (
-									<div className="flex items-center justify-center h-full">
-										<div className="text-muted-foreground">Loading...</div>
-									</div>
-								) : error ? (
-									<div className="flex items-center justify-center h-full">
-										<div className="text-red-500">Error loading records</div>
-									</div>
-								) : allRecords.length === 0 ? (
-									<div className="flex items-center justify-center h-full">
-										<div className="text-muted-foreground">
-											No records found
-										</div>
-									</div>
-								) : (
+						{isLoading && (
+							<div className="text-center py-8">
+								<div className="text-muted-foreground">Loading records...</div>
+							</div>
+						)}
+
+						{!isLoading && !isError && allRecords.length === 0 && (
+							<div className="text-center py-8 text-muted-foreground">
+								<FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+								<p>No records found.</p>
+							</div>
+						)}
+
+						{!isLoading && !isError && allRecords.length > 0 && (
+							<div className="border rounded-lg">
+								<div
+									ref={parentRef}
+									className="h-[600px] overflow-auto"
+									style={{
+										contain: "strict",
+									}}
+								>
 									<div
 										style={{
 											height: `${virtualizer.getTotalSize()}px`,
@@ -327,63 +246,82 @@ export function SearchPage() {
 											position: "relative",
 										}}
 									>
-										{virtualizer.getVirtualItems().map((virtualItem) => {
-											const record = allRecords[virtualItem.index];
-											if (!record) return null;
-
-											return (
-												<div
-													key={virtualItem.key}
-													style={{
-														position: "absolute",
-														top: 0,
-														left: 0,
-														width: "100%",
-														height: `${virtualItem.size}px`,
-														transform: `translateY(${virtualItem.start}px)`,
-													}}
-													className="border-b hover:bg-muted/50 cursor-pointer"
-													onClick={() => handleRowClick(record.id)}
-												>
-													<div className="grid grid-cols-12 gap-4 p-4 items-center h-full">
-														<div className="col-span-5 font-medium">
-															{record.fullName}
-														</div>
-														<div className="col-span-5">
-															{new Date(record.date).toLocaleDateString()}
-														</div>
-														<div className="col-span-2 flex justify-center">
-															<Button
-																variant="outline"
-																size="sm"
-																onClick={(e) => handleDownload(e, record.id)}
-															>
-																<Download className="h-4 w-4" />
-															</Button>
+										{virtualizer.getVirtualItems().map((virtualItem) => (
+											<div
+												key={virtualItem.index}
+												style={{
+													position: "absolute",
+													top: 0,
+													left: 0,
+													width: "100%",
+													height: `${virtualItem.size}px`,
+													transform: `translateY(${virtualItem.start}px)`,
+												}}
+											>
+												{virtualItem.index < allRecords.length ? (
+													getRowContent(virtualItem.index)
+												) : (
+													<div className="flex items-center justify-center py-4">
+														<div className="text-sm text-muted-foreground">
+															{isFetchingNextPage
+																? "Loading more..."
+																: hasNextPage
+																	? "Load more"
+																	: "No more records"}
 														</div>
 													</div>
-												</div>
-											);
-										})}
+												)}
+											</div>
+										))}
 									</div>
-								)}
-							</div>
-						</div>
-
-						{/* Loading indicator and record count */}
-						{isFetchingNextPage && (
-							<div className="text-center py-2">
-								<div className="text-sm text-muted-foreground">
-									Loading more records...
 								</div>
 							</div>
 						)}
 
-						{/* Show total records count */}
-						{allRecords.length > 0 && (
-							<div className="text-sm text-muted-foreground text-center">
-								Showing {allRecords.length} records
-								{hasNextPage && " • Scroll down to load more"}
+						{!isLoading && !isError && allRecords.length > 0 && (
+							<div className="text-center space-y-2">
+								<div className="text-sm text-muted-foreground">
+									Showing {allRecords.length} record
+									{allRecords.length !== 1 ? "s" : ""}
+									{debouncedSearchTerm && ` matching "${debouncedSearchTerm}"`}
+								</div>
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => refetch()}
+									disabled={isRefetching}
+									className="h-8 px-3"
+								>
+									<RefreshCw
+										className={`h-3 w-3 mr-2 ${isRefetching ? "animate-spin" : ""}`}
+									/>
+									{isRefetching ? "Refreshing..." : "Refresh"}
+								</Button>
+							</div>
+						)}
+
+						{/* Always show footer with refresh button */}
+						{(isError ||
+							(isLoading && allRecords.length === 0) ||
+							(!isLoading && !isError && allRecords.length === 0)) && (
+							<div className="text-center space-y-2 pt-4 border-t">
+								{isError && (
+									<div className="text-sm text-muted-foreground">
+										Connection failed - use refresh to retry
+									</div>
+								)}
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => refetch()}
+									disabled={isRefetching}
+									className="h-8 px-3"
+								>
+									<RefreshCw
+										className={`h-3 w-3 mr-2 ${isRefetching ? "animate-spin" : ""}`}
+									/>
+									{isRefetching ? "Refreshing..." : "Refresh"}
+								</Button>
 							</div>
 						)}
 					</CardContent>

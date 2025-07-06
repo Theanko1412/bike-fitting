@@ -8,6 +8,7 @@ import {
 	pedalBrands,
 	ranges,
 } from "@/config/form-config";
+import { fileToBase64 } from "@/lib/utils";
 
 interface FinalBikeMeasurementStepProps {
 	formData: any;
@@ -233,7 +234,29 @@ export function FinalBikeMeasurementStep({
 					accept="image/*"
 					placeholder="Upload final rider photo"
 					className="h-12"
+					onChange={async (e) => {
+						const file = e.target.files?.[0];
+						if (file) {
+							try {
+								const base64 = await fileToBase64(file);
+								handleInputChange("finalRiderPhoto", base64);
+							} catch (error) {
+								console.error("Error converting file to base64:", error);
+							}
+						} else {
+							handleInputChange("finalRiderPhoto", "");
+						}
+					}}
 				/>
+				{formData.finalRiderPhoto && (
+					<div className="mt-2">
+						<img
+							src={formData.finalRiderPhoto}
+							alt="Final rider photo"
+							className="max-w-32 max-h-32 object-cover rounded border"
+						/>
+					</div>
+				)}
 			</div>
 		</>
 	);

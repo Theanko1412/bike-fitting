@@ -6,8 +6,11 @@ export const isFormDataModified = (formData: any) => {
 
 	// Quick check - if any string field that was empty is now filled, it's modified
 	const hasFilledFields = Object.entries(formData).some(([key, value]) => {
-		if (typeof value === "string" && typeof defaultData[key] === "string") {
-			return defaultData[key] === "" && value !== "";
+		if (
+			typeof value === "string" &&
+			typeof (defaultData as any)[key] === "string"
+		) {
+			return (defaultData as any)[key] === "" && value !== "";
 		}
 		return false;
 	});
@@ -23,26 +26,49 @@ export const isFormDataModified = (formData: any) => {
 		}
 
 		// For numbers, check if they've changed
-		if (typeof value === "number" && typeof defaultData[key] === "number") {
-			if (value !== defaultData[key]) {
+		if (
+			typeof value === "number" &&
+			typeof (defaultData as any)[key] === "number"
+		) {
+			if (value !== (defaultData as any)[key]) {
 				return true;
 			}
 		}
 
-		// For objects, do a deep comparison
+		// For Date objects, compare by time value rather than reference
+		if (value instanceof Date && (defaultData as any)[key] instanceof Date) {
+			// Allow small time differences (up to 5 seconds) to account for initialization timing
+			const timeDiff = Math.abs(
+				value.getTime() - (defaultData as any)[key].getTime(),
+			);
+			if (timeDiff > 5000) {
+				// 5 seconds tolerance
+				return true;
+			}
+		}
+
+		// For other objects (excluding Date), do a deep comparison
 		if (
 			typeof value === "object" &&
 			value !== null &&
-			typeof defaultData[key] === "object"
+			!(value instanceof Date) &&
+			typeof (defaultData as any)[key] === "object" &&
+			!((defaultData as any)[key] instanceof Date)
 		) {
-			if (JSON.stringify(value) !== JSON.stringify(defaultData[key])) {
+			if (JSON.stringify(value) !== JSON.stringify((defaultData as any)[key])) {
 				return true;
 			}
 		}
 
 		// For non-empty string defaults that have changed
-		if (typeof value === "string" && typeof defaultData[key] === "string") {
-			if (defaultData[key] !== "" && value !== defaultData[key]) {
+		if (
+			typeof value === "string" &&
+			typeof (defaultData as any)[key] === "string"
+		) {
+			if (
+				(defaultData as any)[key] !== "" &&
+				value !== (defaultData as any)[key]
+			) {
 				return true;
 			}
 		}

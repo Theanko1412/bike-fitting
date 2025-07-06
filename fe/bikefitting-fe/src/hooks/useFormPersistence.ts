@@ -10,14 +10,45 @@ export const STORAGE_KEY = "bikefitting-form-data";
 export const EXPIRATION_HOURS = 6;
 export const FORM_VERSION = "1.0"; // Increment this if form structure changes significantly
 
+// Fields that should be excluded from localStorage
+const EXCLUDED_FIELDS = [
+	"initialRiderPhoto",
+	"forwardSpinalFlexionPhoto",
+	"finalRiderPhoto",
+	"fitter", // Exclude fitter object to avoid localStorage issues
+];
+
+// Remove excluded fields from form data before saving
+function excludeFields(formData: any): any {
+	const filtered = { ...formData };
+	EXCLUDED_FIELDS.forEach((field) => {
+		delete filtered[field];
+	});
+	return filtered;
+}
+
+// Reset excluded fields when restoring (images to empty strings, fitter to default)
+function resetExcludedFields(formData: any): any {
+	const restored = { ...formData };
+	// Reset image fields to empty strings
+	restored.initialRiderPhoto = "";
+	restored.forwardSpinalFlexionPhoto = "";
+	restored.finalRiderPhoto = "";
+	// Reset fitter to default (will need to be re-selected)
+	// Don't set a default here, let the form component handle it
+	delete restored.fitter;
+	return restored;
+}
+
 export function useFormPersistence() {
 	const saveTimeoutRef = useRef<NodeJS.Timeout>();
 
-	// Save form data to localStorage with timestamp
+	// Save form data to localStorage with timestamp (excluding images and fitter)
 	const saveFormData = useCallback((formData: any) => {
 		try {
+			const filteredData = excludeFields(formData);
 			const storageData: StoredFormData = {
-				data: formData,
+				data: filteredData,
 				timestamp: Date.now(),
 				version: FORM_VERSION,
 			};
@@ -66,7 +97,7 @@ export function useFormPersistence() {
 				return null;
 			}
 
-			return storageData.data;
+			return resetExcludedFields(storageData.data);
 		} catch (error) {
 			console.warn("Failed to load form data from localStorage:", error);
 			clearFormData(); // Clear corrupted data

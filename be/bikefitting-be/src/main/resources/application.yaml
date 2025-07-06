@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: bikefitting-be
+  datasource:
+    url: jdbc:postgresql://localhost:5433/bikefitting
+    username: bikefitting
+    password: bikefitting
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+server:
+  port: 8080
+  address: 0.0.0.0

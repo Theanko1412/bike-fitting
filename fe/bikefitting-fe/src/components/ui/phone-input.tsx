@@ -32,17 +32,27 @@ type PhoneInputProps = Omit<
 const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
 	React.forwardRef<React.ElementRef<typeof RPNInput.default>, PhoneInputProps>(
 		({ className, onChange, value, ...props }, ref) => {
+			const CountrySelectComponent = React.useMemo(
+				() => (props: any) => (
+					<CountrySelect {...props} className={className} />
+				),
+				[className],
+			);
+
+			const InputComponentMemo = React.useMemo(
+				() => (props: any) => (
+					<InputComponent {...props} className={className} />
+				),
+				[className],
+			);
+
 			return (
 				<RPNInput.default
 					ref={ref}
 					className={cn("flex", className)}
 					flagComponent={FlagComponent}
-					countrySelectComponent={(props) => (
-						<CountrySelect {...props} className={className} />
-					)}
-					inputComponent={(props) => (
-						<InputComponent {...props} className={className} />
-					)}
+					countrySelectComponent={CountrySelectComponent}
+					inputComponent={InputComponentMemo}
 					smartCaret={false}
 					value={value || undefined}
 					/**

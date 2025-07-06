@@ -489,3 +489,70 @@ Files prefixed with `demo` can be safely deleted. They are there to provide a st
 # Learn More
 
 You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
+
+# Bike Fitting Frontend
+
+This is a React + TypeScript + Vite application for bike fitting records management.
+
+## Environment Setup
+
+Create a `.env.local` file in the root directory with the following configuration:
+
+```bash
+# Backend API URL
+VITE_API_BASE_URL=http://localhost:8080
+```
+
+For different environments:
+
+```bash
+# Development (default)
+VITE_API_BASE_URL=http://localhost:8080
+
+# Production
+VITE_API_BASE_URL=https://your-production-api.com
+
+# Other environments
+VITE_API_BASE_URL=https://staging-api.your-domain.com
+```
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+```
+
+## API Integration
+
+The application uses a service layer (`src/services/bikeFittingService.ts`) to communicate with the backend API. All API calls are centralized and use the environment variable for the base URL.
+
+### Available API Endpoints:
+
+- `GET /api/records` - Search and paginate bike fitting records
+- `GET /api/records/{id}` - Get individual record details
+- `POST /api/form` - Submit new bike fitting form
+
+## Features
+
+- **Infinite Virtual Scrolling** - Efficiently handle thousands of records
+- **Real-time Search** - Filter records by name
+- **Form Management** - Multi-step form with auto-save
+- **Responsive Design** - Works on all screen sizes
+
+## Technology Stack
+
+- React 19
+- TypeScript
+- Vite
+- TanStack Query (for data fetching)
+- TanStack Virtual (for performance)
+- TanStack Router (for navigation)
+- Tailwind CSS (for styling)
+- shadcn/ui (for components)

@@ -1,5 +1,7 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +23,7 @@ import {
 } from "@/hooks/useFormPersistence";
 import { useVisibilityChange } from "@/hooks/useVisibilityChange";
 import { isFormDataModified } from "@/utils/debugFormPersistence";
+import { BikeFittingService } from "../services/bikeFittingService";
 import { FinalBikeMeasurementStep } from "./steps/final-bike-measurement-step";
 import { FullBodyAssessmentStep } from "./steps/full-body-assessment-step";
 import { GeneralInformationStep } from "./steps/general-information-step";
@@ -30,9 +33,20 @@ import { ShoeSetupStep } from "./steps/shoe-setup-step";
 export function BikeFittingForm() {
 	const [currentStep, setCurrentStep] = useState(0);
 	const [hasPopulatedStep3, setHasPopulatedStep3] = useState(false);
-	const [formData, setFormData] = useState(getDefaultFormData());
+	const [formData, setFormData] = useState(() => {
+		const defaults = getDefaultFormData();
+		// Ensure all photo fields are explicitly set
+		return {
+			...defaults,
+			initialRiderPhoto: defaults.initialRiderPhoto || "",
+			forwardSpinalFlexionPhoto: defaults.forwardSpinalFlexionPhoto || "",
+			finalRiderPhoto: defaults.finalRiderPhoto || "",
+		};
+	});
 	const [isAutoSaving, setIsAutoSaving] = useState(false);
 	const [showRestorePrompt, setShowRestorePrompt] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const navigate = useNavigate();
 
 	const {
 		saveFormData,
@@ -85,7 +99,9 @@ export function BikeFittingForm() {
 			setShowRestorePrompt(false);
 			// Set form data after hiding prompt to prevent auto-save during restore
 			setTimeout(() => {
-				setFormData(storedData);
+				// Normalize restored data to ensure all fields are present
+				const normalizedData = normalizeFormData(storedData);
+				setFormData(normalizedData);
 			}, 50);
 		}
 	};
@@ -94,6 +110,17 @@ export function BikeFittingForm() {
 	const handleDiscardData = () => {
 		clearFormData();
 		setShowRestorePrompt(false);
+		// Reset form data to defaults to prevent false positive modifications
+		setFormData(() => {
+			const defaults = getDefaultFormData();
+			// Ensure all photo fields are explicitly set
+			return {
+				...defaults,
+				initialRiderPhoto: defaults.initialRiderPhoto || "",
+				forwardSpinalFlexionPhoto: defaults.forwardSpinalFlexionPhoto || "",
+				finalRiderPhoto: defaults.finalRiderPhoto || "",
+			};
+		});
 	};
 
 	// Save data when user leaves the app (switch tabs, close browser, etc.)
@@ -157,23 +184,98 @@ export function BikeFittingForm() {
 		window.scrollTo(0, 0);
 	};
 
+	const handleHomeNavigation = () => {
+		// Check if user has made any changes to the form
+		if (isFormDataModified(formData)) {
+			// Force immediate save before navigating home (same as visibility change logic)
+			try {
+				const storageData = {
+					data: formData,
+					timestamp: Date.now(),
+					version: FORM_VERSION,
+				};
+				localStorage.setItem(STORAGE_KEY, JSON.stringify(storageData));
+
+				toast.info("Form progress saved", {
+					description:
+						"Your changes have been saved and you can continue later",
+					duration: 5000,
+				});
+			} catch (error) {
+				console.warn("Failed to save form data before home navigation:", error);
+				toast.error("Failed to save progress", {
+					description: "There was an error saving your changes",
+					duration: 5000,
+				});
+			}
+		}
+
+		// Navigate to home
+		navigate({ to: "/" });
+	};
+
 	const handleInputChange = (field: string, value: any) => {
 		setFormData((prev) => ({ ...prev, [field]: value }));
 	};
 
-	const handleSubmit = () => {
-		console.log("Form submitted:", formData);
-		alert("Bike fitting form submitted successfully!");
+	// Ensure all required fields are present before submission
+	const normalizeFormData = (data: any) => {
+		const defaults = getDefaultFormData();
+		const normalized = { ...defaults, ...data };
 
-		// Clear stored data after successful submission
-		clearFormData();
+		// Ensure photo fields are always strings (never undefined)
+		normalized.initialRiderPhoto = normalized.initialRiderPhoto || "";
+		normalized.forwardSpinalFlexionPhoto =
+			normalized.forwardSpinalFlexionPhoto || "";
+		normalized.finalRiderPhoto = normalized.finalRiderPhoto || "";
 
-		// Reset the population flag for next form session
-		setHasPopulatedStep3(false);
+		return normalized;
+	};
 
-		// Reset form to initial state
-		setFormData(getDefaultFormData());
-		setCurrentStep(0);
+	const handleSubmit = async () => {
+		setIsSubmitting(true);
+
+		try {
+			// Normalize form data to ensure all required fields are present
+			const normalizedData = normalizeFormData(formData);
+			console.log("Submitting form data:", normalizedData);
+
+			// Submit to backend using service layer
+			const response = await BikeFittingService.submitForm(normalizedData);
+
+			console.log("Form submitted successfully:", response);
+
+			// Show success notification
+			toast.success("Form submitted successfully!", {
+				duration: 5000,
+			});
+
+			// Clear stored data after successful submission
+			clearFormData();
+
+			// Reset the population flag for next form session
+			setHasPopulatedStep3(false);
+
+			// Reset form to initial state
+			setFormData(getDefaultFormData());
+			setCurrentStep(0);
+
+			// Navigate to the view page
+			navigate({ to: `/view/${response.id}` });
+		} catch (error) {
+			console.error("Form submission failed:", error);
+
+			// Show error notification
+			toast.error("Failed to submit form", {
+				description:
+					error instanceof Error
+						? error.message
+						: "An unexpected error occurred",
+				duration: 5000,
+			});
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
 	const progress = (currentStep / (steps.length - 1)) * 100;
@@ -256,20 +358,36 @@ export function BikeFittingForm() {
 				<div className="w-full max-w-[500px] mx-auto px-4">
 					<Progress value={progress} className="w-full mb-2" />
 					<div className="flex gap-2">
-						<Button
-							variant="outline"
-							onClick={prevStep}
-							disabled={currentStep === 0}
-							size="lg"
-							className="flex-1"
-						>
-							<ChevronLeft className="w-4 h-4 mr-2" />
-							Previous
-						</Button>
+						{currentStep === 0 ? (
+							<Button
+								variant="outline"
+								onClick={handleHomeNavigation}
+								size="lg"
+								className="flex-1"
+							>
+								<ArrowLeft className="w-4 h-4 mr-2" />
+								Home
+							</Button>
+						) : (
+							<Button
+								variant="outline"
+								onClick={prevStep}
+								size="lg"
+								className="flex-1"
+							>
+								<ChevronLeft className="w-4 h-4 mr-2" />
+								Previous
+							</Button>
+						)}
 
 						{currentStep === steps.length - 1 ? (
-							<Button onClick={handleSubmit} size="lg" className="flex-[5]">
-								Submit
+							<Button
+								onClick={handleSubmit}
+								size="lg"
+								className="flex-[5]"
+								disabled={isSubmitting}
+							>
+								{isSubmitting ? "Submitting..." : "Submit"}
 							</Button>
 						) : (
 							<Button onClick={nextStep} size="lg" className="flex-[5]">

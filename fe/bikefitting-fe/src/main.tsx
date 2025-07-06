@@ -13,16 +13,17 @@ import ReactDOM from "react-dom/client";
 import "./styles.css";
 import App from "./App.tsx";
 import { ThemeProvider } from "./components/theme-provider";
+import { Toaster } from "./components/ui/sonner";
 import FormPage from "./pages/form";
-import { SearchPage } from "./pages/search";
-import { ViewPage } from "./pages/view";
+import SearchPage from "./pages/search";
+import ViewPage from "./pages/view";
 import { handleInstallPrompt, registerSW } from "./utils/pwa";
 
 // Create a client
 const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
-			staleTime: 1000 * 60 * 5, // 5 minutes
+			staleTime: 1000 * 30,
 			retry: 1,
 		},
 	},
@@ -32,6 +33,7 @@ const rootRoute = createRootRoute({
 	component: () => (
 		<ThemeProvider>
 			<Outlet />
+			<Toaster richColors position="top-center" visibleToasts={5} />
 		</ThemeProvider>
 	),
 });
