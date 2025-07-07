@@ -104,19 +104,18 @@ declare module "@tanstack/react-router" {
 // GitHub Pages redirect handler - convert /?/path back to /path
 function handleGitHubPagesRedirect() {
 	const url = new URL(window.location.href);
-	const searchParams = url.searchParams;
-	
+
 	// Check if this is a GitHub Pages redirect (has ?/ in the URL)
-	if (url.search.startsWith('?/')) {
+	if (url.search.startsWith("?/")) {
 		// Extract the path after ?/
 		const redirectPath = url.search.slice(2); // Remove ?/
-		
+
 		// Reconstruct the proper URL
-		const basePath = import.meta.env.PROD ? '/bike-fitting' : '';
-		const newPath = basePath + '/' + redirectPath;
-		
+		const basePath = import.meta.env.PROD ? "/bike-fitting" : "";
+		const newPath = basePath + "/" + redirectPath;
+
 		// Replace the current URL without page reload
-		window.history.replaceState(null, '', newPath);
+		window.history.replaceState(null, "", newPath);
 	}
 }
 
