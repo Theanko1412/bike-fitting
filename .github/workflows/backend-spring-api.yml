@@ -1,0 +1,140 @@
+name: Backend Spring Api
+
+on:
+  push:
+    branches:
+      - main  # Trigger only on pushes to the main branch
+    tags:
+      - '**'  # Trigger for any tag push
+    paths:
+      - be/bikefitting-be/**  # Trigger only if changes are made to files in this directory
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run chmod to make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@ccb4328a959376b642e027874838f60f8e596de3
+
+      - name: Build with Gradle
+        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629
+        with:
+          arguments: assemble
+
+  package:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run chmod to make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@ccb4328a959376b642e027874838f60f8e596de3
+
+      - name: Package with Gradle
+        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629
+        with:
+          arguments: bootJar
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bikefitting-be-jar
+          path: ./be/bikefitting-be/build/libs/*.jar
+
+  github-release:
+    name: "Create GitHub Release"
+    permissions: write-all
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: package
+
+    steps:
+      - name: Download release artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: bikefitting-be-jar
+      - run: ls -la
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
+          draft: false
+          files: "*.jar"
+
+  push-to-docker-registry:
+    name: "Push to Docker Registry"
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: github-release
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: theanko1412/home-server
+
+      - name: Download release artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: bikefitting-be-jar
+          path: ./be/bikefitting-be
+
+      - name: Extract repository name
+        id: repo
+        run: echo "::set-output name=repo::$(echo ${{ github.repository }} | cut -d'/' -f2)"
+        shell: bash
+
+      - name: Modify tags
+        id: modify-tags
+        run: |
+          IFS=',' read -ra tags <<< "${{ steps.meta.outputs.tags }}"
+          modified_tags=()
+          for tag in "${tags[@]}"; do
+            prefix=$(echo "$tag" | awk -F: '{print $1}')
+            version=$(echo "$tag" | awk -F: '{print $NF}')
+            modified_tags+=("$prefix:${{ steps.repo.outputs.repo }}-$version")
+          done
+          echo "::set-output name=tags::${modified_tags[*]}"
+        shell: bash
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        with:
+          context: .
+          file: ./support/docker/bikefitting/Dockerfile
+          push: true
+          tags: ${{ steps.modify-tags.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

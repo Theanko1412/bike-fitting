@@ -18,5 +18,7 @@ count.txt
 /fe/bikefitting-fe/.env
 /fe/bikefitting-fe/.nitro
 /fe/bikefitting-fe/.tanstack
-
+/fe/bikefitting-fe/.vscode
 /junk
+
+.idea
