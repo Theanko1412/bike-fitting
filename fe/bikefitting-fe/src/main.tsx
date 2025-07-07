@@ -92,6 +92,7 @@ const router = createRouter({
 	scrollRestoration: true,
 	defaultStructuralSharing: true,
 	defaultPreloadStaleTime: 0,
+	basepath: import.meta.env.PROD ? "/bike-fitting" : undefined,
 });
 
 declare module "@tanstack/react-router" {
