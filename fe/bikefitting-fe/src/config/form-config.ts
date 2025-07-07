@@ -22,13 +22,20 @@ export const steps = [
 	},
 ];
 
-export const fitters = [
-	{
-		fullName: "Juraj Segin",
-		email: "segin1996@gmail.com",
-		phone: "+385 95 904 2077",
-	},
-];
+// Load fitters from environment variables (sensitive data)
+export const fitters = (() => {
+	try {
+		const fittersJson = import.meta.env.VITE_FITTERS;
+		if (!fittersJson) {
+			console.warn('VITE_FITTERS environment variable not set, using fallback');
+			return [{ fullName: "Default Fitter", email: "email@email.com", phone: "+385 00 000 0000" }];
+		}
+		return JSON.parse(fittersJson);
+	} catch (error) {
+		console.error('Failed to parse VITE_FITTERS:', error);
+		return [{ fullName: "Default Fitter", email: "email@email.com", phone: "+385 00 000 0000" }];
+	}
+})();
 
 export const cyclingExperience = [
 	"Beginner",
