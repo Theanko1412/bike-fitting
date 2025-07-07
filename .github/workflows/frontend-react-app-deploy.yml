@@ -47,6 +47,7 @@ jobs:
           cd fe/bikefitting-fe
           npm run build
         env:
+          NODE_ENV: production
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 
       - name: Setup Pages

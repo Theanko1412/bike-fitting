@@ -47,7 +47,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run chmod to make gradlew executable
-        run: chmod +x ./gradlew
+        run: chmod +x ./be/bikefitting-be/gradlew
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -58,11 +58,15 @@ jobs:
 
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@ccb4328a959376b642e027874838f60f8e596de3
+        with:
+          gradle-wrapper-path: be/bikefitting-be/gradle/wrapper/gradle-wrapper.properties
 
       - name: Package with Gradle
         uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629
         with:
           arguments: bootJar
+          build-root-directory: be/bikefitting-be
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:

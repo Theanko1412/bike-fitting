@@ -2,9 +2,11 @@
 export const registerSW = () => {
 	if ("serviceWorker" in navigator) {
 		window.addEventListener("load", () => {
-			// Use relative path to work with base path configuration
+			// Use base path that matches production environment
+			const swPath = import.meta.env.PROD ? "/bike-fitting/sw.js" : "/sw.js";
+			
 			navigator.serviceWorker
-				.register("./sw.js")
+				.register(swPath)
 				.then((registration) => {
 					console.log("SW registered: ", registration);
 				})
