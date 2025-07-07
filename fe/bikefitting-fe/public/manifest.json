@@ -27,13 +27,13 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
   "theme_color": "#0f0f0f",
   "background_color": "#0f0f0f",
   "categories": ["health", "fitness", "sports"],
   "lang": "en",
-  "scope": "/",
+  "scope": "./",
   "display_override": ["window-controls-overlay", "standalone"]
 }
