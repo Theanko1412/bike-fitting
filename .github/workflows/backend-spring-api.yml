@@ -8,6 +8,7 @@ on:
       - '**'  # Trigger for any tag push
     paths:
       - be/bikefitting-be/**  # Trigger only if changes are made to files in this directory
+      - .github/workflows/backend-spring-api.yml  # Trigger if this workflow file is changed
 
 jobs:
   build:

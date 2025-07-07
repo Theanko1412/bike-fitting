@@ -4,17 +4,20 @@
     <meta charset="utf-8">
     <title>Bike Fitting App</title>
     <script type="text/javascript">
-        // GitHub Pages SPA redirect script
-        // This script takes the current URL and redirects to the root with the path as a query parameter
-        var pathSegmentsToKeep = 1;
+        // GitHub Pages SPA redirect script for /bike-fitting/ base path
         var l = window.location;
-        l.replace(
-            l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-            l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
-            l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
-            (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-            l.hash
-        );
+        var pathSegments = l.pathname.split('/').filter(Boolean);
+        
+        // If we're not at the base path, redirect to index.html with path info
+        if (pathSegments.length > 1 || (pathSegments.length === 1 && pathSegments[0] !== 'bike-fitting')) {
+            // Redirect to /bike-fitting/?/[rest-of-path]
+            var redirectPath = '/bike-fitting/?/' + 
+                l.pathname.replace('/bike-fitting/', '').replace(/^\//, '') +
+                (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+                l.hash;
+            
+            l.replace(l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + redirectPath);
+        }
     </script>
 </head>
 <body>

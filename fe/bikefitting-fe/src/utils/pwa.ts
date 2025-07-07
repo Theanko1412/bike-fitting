@@ -2,8 +2,9 @@
 export const registerSW = () => {
 	if ("serviceWorker" in navigator) {
 		window.addEventListener("load", () => {
+			// Use relative path to work with base path configuration
 			navigator.serviceWorker
-				.register("/sw.js")
+				.register("./sw.js")
 				.then((registration) => {
 					console.log("SW registered: ", registration);
 				})
