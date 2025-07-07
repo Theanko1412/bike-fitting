@@ -142,7 +142,7 @@ jobs:
         uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
         with:
           context: .
-          file: ./support/docker/bikefitting/Dockerfile
+          file: ./be/bikefitting-be/support/docker/bikefitting/Dockerfile
           push: true
           tags: ${{ steps.modify-tags.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
