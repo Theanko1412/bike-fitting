@@ -1,4 +1,4 @@
-import { API_CONFIG, buildApiUrl } from "../config/api";
+import { buildApiUrl } from "../config/api";
 
 // Types matching the backend
 export interface LoginRequest {

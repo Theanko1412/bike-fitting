@@ -41,7 +41,7 @@ function resetExcludedFields(formData: any): any {
 }
 
 export function useFormPersistence() {
-	const saveTimeoutRef = useRef<NodeJS.Timeout>();
+	const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 	// Save form data to localStorage with timestamp (excluding images and fitter)
 	const saveFormData = useCallback((formData: any) => {

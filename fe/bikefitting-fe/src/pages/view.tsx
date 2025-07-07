@@ -5,7 +5,6 @@ import {
 	AlertCircle,
 	ArrowLeft,
 	Calendar,
-	Copy,
 	Download,
 	FileText,
 	Image as ImageIcon,
@@ -24,10 +23,7 @@ import {
 } from "../components/ui/card";
 import { Dialog, DialogContent, DialogTitle } from "../components/ui/dialog";
 import { formatDate } from "../lib/utils";
-import {
-	type BikeFittingDAO,
-	BikeFittingService,
-} from "../services/bikeFittingService";
+import { BikeFittingService } from "../services/bikeFittingService";
 
 export default function ViewPage() {
 	const { id } = useParams({ strict: false });
@@ -76,7 +72,6 @@ export default function ViewPage() {
 		data: pdfData,
 		isLoading: isPdfLoading,
 		error: pdfError,
-		refetch: refetchPdf,
 	} = useQuery({
 		queryKey: ["bikeFittingPdf", id],
 		queryFn: async () => {

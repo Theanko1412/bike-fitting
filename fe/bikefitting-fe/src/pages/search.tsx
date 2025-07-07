@@ -7,7 +7,6 @@ import {
 	Download,
 	FileText,
 	RefreshCw,
-	Search,
 	User,
 } from "lucide-react";
 import React, { useState, useMemo } from "react";
@@ -43,7 +42,6 @@ export default function SearchPage() {
 
 	const {
 		data,
-		error,
 		fetchNextPage,
 		hasNextPage,
 		isFetchingNextPage,
