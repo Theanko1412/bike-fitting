@@ -1,15 +1,16 @@
 import { API_CONFIG, buildApiUrl } from "../config/api";
+import { AuthService } from "./authService";
 
 // Types
 export interface BikeFittingRecord {
-	id: number;
+	id: string;
 	fullName: string;
 	date: string;
 	hasFile: boolean;
 }
 
 export interface BikeFittingDAO {
-	id: number;
+	id: string;
 	fullName: string;
 	fitterFullName: string;
 	date: string;
@@ -33,6 +34,20 @@ export interface BackendErrorResponse {
 	message: string;
 	timestamp: string;
 	route: string;
+}
+
+// Helper function to get headers with authentication
+function getAuthHeaders(): HeadersInit {
+	const headers: HeadersInit = {
+		"Content-Type": "application/json",
+	};
+
+	const authHeader = AuthService.getAuthHeader();
+	if (authHeader) {
+		headers.Authorization = authHeader;
+	}
+
+	return headers;
 }
 
 // Helper function to parse backend error responses
@@ -68,7 +83,9 @@ export class BikeFittingService {
 		const url = buildApiUrl(API_CONFIG.endpoints.records, params);
 
 		try {
-			const response = await fetch(url);
+			const response = await fetch(url, {
+				headers: getAuthHeaders(),
+			});
 
 			if (!response.ok) {
 				const errorMessage = await parseErrorResponse(response);
@@ -82,7 +99,7 @@ export class BikeFittingService {
 				...data,
 				data: data.data.map((record: any) => ({
 					...record,
-					id: record.id, // Keep as number
+					id: record.id, // Keep as string
 					date: new Date(record.date).toISOString().split("T")[0], // Convert LocalDate to string
 					hasFile:
 						record.hasFile !== undefined
@@ -105,7 +122,9 @@ export class BikeFittingService {
 		const url = buildApiUrl(`${API_CONFIG.endpoints.records}/${id}`);
 
 		try {
-			const response = await fetch(url);
+			const response = await fetch(url, {
+				headers: getAuthHeaders(),
+			});
 
 			if (!response.ok) {
 				const errorMessage = await parseErrorResponse(response);
@@ -134,14 +153,19 @@ export class BikeFittingService {
 		try {
 			const response = await fetch(url, {
 				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
+				headers: getAuthHeaders(),
 				body: JSON.stringify(formData),
 			});
 
-			if (!response.ok) {
+			// Only accept HTTP 201 CREATED as success - anything else is an error
+			if (response.status !== 201) {
 				const errorMessage = await parseErrorResponse(response);
+
+				// For 400 BAD_REQUEST, prefix the error message so frontend can detect it
+				if (response.status === 400) {
+					throw new Error(`BAD_REQUEST: ${errorMessage}`);
+				}
+
 				throw new Error(errorMessage);
 			}
 
@@ -159,16 +183,71 @@ export class BikeFittingService {
 	}
 
 	/**
+	 * Fetch PDF blob data for caching (without triggering download)
+	 */
+	static async fetchPdfBlob(id: string): Promise<{
+		blob: Blob;
+		filename: string;
+	}> {
+		const url = buildApiUrl(`${API_CONFIG.endpoints.records}/${id}/pdf`);
+
+		try {
+			const response = await fetch(url, {
+				headers: getAuthHeaders(),
+			});
+
+			if (!response.ok) {
+				if (response.status === 404) {
+					throw new Error("PDF file not found for this record");
+				}
+				const errorMessage = await parseErrorResponse(response);
+				throw new Error(errorMessage);
+			}
+
+			// Get the filename from Content-Disposition header
+			const contentDisposition = response.headers.get("Content-Disposition");
+			let filename = "bike-fitting-report.pdf"; // Default fallback
+
+			if (contentDisposition) {
+				// Try multiple patterns to extract filename
+				let filenameMatch = contentDisposition.match(
+					/filename\*?=['"]?([^'";]+)['"]?/i,
+				);
+				if (!filenameMatch) {
+					filenameMatch = contentDisposition.match(
+						/filename=['"]?([^'";]+)['"]?/i,
+					);
+				}
+				if (!filenameMatch) {
+					filenameMatch = contentDisposition.match(/filename=([^;,\s]+)/i);
+				}
+
+				if (filenameMatch) {
+					filename = filenameMatch[1].trim();
+				}
+			}
+
+			const blob = await response.blob();
+			return { blob, filename };
+		} catch (error) {
+			console.error("Failed to fetch PDF blob:", error);
+			throw error;
+		}
+	}
+
+	/**
 	 * Download PDF for a record
 	 */
 	static async downloadPdf(
-		id: number | string,
+		id: string,
 		record?: { fullName: string; date: string },
 	): Promise<void> {
 		const url = buildApiUrl(`${API_CONFIG.endpoints.records}/${id}/pdf`);
 
 		try {
-			const response = await fetch(url);
+			const response = await fetch(url, {
+				headers: getAuthHeaders(),
+			});
 
 			if (!response.ok) {
 				if (response.status === 404) {
@@ -190,8 +269,6 @@ export class BikeFittingService {
 			const contentDisposition = response.headers.get("Content-Disposition");
 			let filename = fallbackFilename;
 
-			console.log("Content-Disposition header:", contentDisposition); // Debug log
-
 			if (contentDisposition) {
 				// Try multiple patterns to extract filename
 				let filenameMatch = contentDisposition.match(
@@ -208,20 +285,7 @@ export class BikeFittingService {
 
 				if (filenameMatch) {
 					filename = filenameMatch[1].trim();
-					console.log("Extracted filename:", filename); // Debug log
-				} else {
-					console.log(
-						"No filename match found in:",
-						contentDisposition,
-						"- using fallback:",
-						fallbackFilename,
-					); // Debug log
 				}
-			} else {
-				console.log(
-					"No Content-Disposition header found - using fallback:",
-					fallbackFilename,
-				); // Debug log
 			}
 
 			// Create blob and download

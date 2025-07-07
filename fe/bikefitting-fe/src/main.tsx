@@ -12,8 +12,10 @@ import ReactDOM from "react-dom/client";
 
 import "./styles.css";
 import App from "./App.tsx";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { ThemeProvider } from "./components/theme-provider";
 import { Toaster } from "./components/ui/sonner";
+import { AuthProvider } from "./contexts/AuthContext";
 import FormPage from "./pages/form";
 import SearchPage from "./pages/search";
 import ViewPage from "./pages/view";
@@ -32,8 +34,10 @@ const queryClient = new QueryClient({
 const rootRoute = createRootRoute({
 	component: () => (
 		<ThemeProvider>
-			<Outlet />
-			<Toaster richColors position="top-center" visibleToasts={5} />
+			<AuthProvider>
+				<Outlet />
+				<Toaster richColors position="top-center" visibleToasts={5} />
+			</AuthProvider>
 		</ThemeProvider>
 	),
 });
@@ -47,19 +51,31 @@ const indexRoute = createRoute({
 const searchRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/search",
-	component: SearchPage,
+	component: () => (
+		<ProtectedRoute>
+			<SearchPage />
+		</ProtectedRoute>
+	),
 });
 
 const formRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/form",
-	component: FormPage,
+	component: () => (
+		<ProtectedRoute>
+			<FormPage />
+		</ProtectedRoute>
+	),
 });
 
 const viewRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/view/$id",
-	component: ViewPage,
+	component: () => (
+		<ProtectedRoute>
+			<ViewPage />
+		</ProtectedRoute>
+	),
 });
 
 const routeTree = rootRoute.addChildren([

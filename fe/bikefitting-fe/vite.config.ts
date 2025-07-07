@@ -16,4 +16,24 @@ export default defineConfig({
       '@': resolve(__dirname, './src'),
     },
   },
+  build: {
+    // Security settings for production
+    sourcemap: false, // Disable source maps in production
+    minify: 'terser', // Use terser for better minification
+    terserOptions: {
+      compress: {
+        drop_console: true, // Remove all console statements in production
+        drop_debugger: true, // Remove debugger statements
+      },
+    },
+    rollupOptions: {
+      output: {
+        // Obfuscate chunk names
+        manualChunks: undefined,
+        entryFileNames: '[hash].js',
+        chunkFileNames: '[hash].js',
+        assetFileNames: '[hash].[ext]',
+      },
+    },
+  },
 })

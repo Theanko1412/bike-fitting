@@ -35,6 +35,7 @@ export default function ViewPage() {
 		src: string;
 		title: string;
 	} | null>(null);
+	const [shouldFetchPdf, setShouldFetchPdf] = React.useState(false);
 
 	const {
 		data: record,
@@ -70,6 +71,94 @@ export default function ViewPage() {
 		refetchOnReconnect: false, // Don't refetch when network reconnects
 	});
 
+	// Cached PDF blob query - only enabled when download is requested
+	const {
+		data: pdfData,
+		isLoading: isPdfLoading,
+		error: pdfError,
+		refetch: refetchPdf,
+	} = useQuery({
+		queryKey: ["bikeFittingPdf", id],
+		queryFn: async () => {
+			if (!id) {
+				throw new Error("Record ID is required");
+			}
+			return await BikeFittingService.fetchPdfBlob(id);
+		},
+		enabled: !!id && !!record?.pdfFile && shouldFetchPdf, // Only fetch when explicitly requested
+		// Aggressive caching for immutable PDF files
+		staleTime: 24 * 60 * 60 * 1000, // 24 hours - PDFs never change
+		gcTime: 10 * 60 * 1000, // 10 minutes - cleanup to manage memory (PDFs can be large)
+		retry: 1, // Only retry once for failed requests
+		refetchOnWindowFocus: false, // Don't refetch when window gains focus
+		refetchOnReconnect: false, // Don't refetch when network reconnects
+	});
+
+	// Auto-download when PDF data becomes available after being requested
+	React.useEffect(() => {
+		if (shouldFetchPdf && !isPdfLoading && record) {
+			if (pdfData) {
+				// PDF fetch succeeded - trigger download
+				try {
+					let filename = pdfData.filename;
+
+					// Generate fallback filename if needed (same logic as backend)
+					if (!filename || filename === "bike-fitting-report.pdf") {
+						const cleanFullName = record.fullName.replace(/ /g, ""); // Remove all spaces
+						const dateString = record.date; // Already in yyyy-mm-dd format
+						filename = `${cleanFullName}-${dateString}-bike-fitting-report.pdf`;
+					}
+
+					// Create download using cached blob
+					const downloadUrl = window.URL.createObjectURL(pdfData.blob);
+					const link = document.createElement("a");
+					link.href = downloadUrl;
+					link.download = filename;
+					document.body.appendChild(link);
+					link.click();
+
+					// Cleanup
+					document.body.removeChild(link);
+					window.URL.revokeObjectURL(downloadUrl);
+
+					toast.success("PDF downloaded successfully", {
+						description: "The bike fitting report has been downloaded",
+						duration: 3000,
+					});
+				} catch (error) {
+					toast.error("Failed to download PDF", {
+						description:
+							error instanceof Error
+								? error.message
+								: "An unexpected error occurred while downloading the PDF",
+						duration: 5000,
+					});
+				}
+			} else if (pdfError) {
+				// PDF fetch failed - fall back to direct download
+				BikeFittingService.downloadPdf(record.id, {
+					fullName: record.fullName,
+					date: record.date,
+				})
+					.then(() => {
+						toast.success("PDF downloaded successfully", {
+							description: "The bike fitting report has been downloaded",
+							duration: 3000,
+						});
+					})
+					.catch((error) => {
+						toast.error("Failed to download PDF", {
+							description:
+								error instanceof Error
+									? error.message
+									: "An unexpected error occurred while downloading the PDF",
+							duration: 5000,
+						});
+					});
+			}
+		}
+	}, [shouldFetchPdf, pdfData, isPdfLoading, pdfError, record]);
+
 	const handleDownload = async () => {
 		if (!record?.pdfFile) {
 			toast.warning("No file available for download", {
@@ -79,23 +168,79 @@ export default function ViewPage() {
 			return;
 		}
 
-		try {
-			await BikeFittingService.downloadPdf(record.id, {
-				fullName: record.fullName,
-				date: record.date,
-			});
-			toast.success("PDF downloaded successfully", {
-				description: "The bike fitting report has been downloaded",
-				duration: 3000,
-			});
-		} catch (error) {
-			toast.error("Failed to download PDF", {
-				description:
-					error instanceof Error
-						? error.message
-						: "An unexpected error occurred while downloading the PDF",
-				duration: 5000,
-			});
+		// If we already have cached PDF data, use it immediately
+		if (pdfData && !pdfError) {
+			try {
+				// Use cached PDF data for download
+				let filename = pdfData.filename;
+
+				// Generate fallback filename if needed (same logic as backend)
+				if (!filename || filename === "bike-fitting-report.pdf") {
+					const cleanFullName = record.fullName.replace(/ /g, ""); // Remove all spaces
+					const dateString = record.date; // Already in yyyy-mm-dd format
+					filename = `${cleanFullName}-${dateString}-bike-fitting-report.pdf`;
+				}
+
+				// Create download using cached blob
+				const downloadUrl = window.URL.createObjectURL(pdfData.blob);
+				const link = document.createElement("a");
+				link.href = downloadUrl;
+				link.download = filename;
+				document.body.appendChild(link);
+				link.click();
+
+				// Cleanup
+				document.body.removeChild(link);
+				window.URL.revokeObjectURL(downloadUrl);
+
+				toast.success("PDF downloaded successfully", {
+					description: "The bike fitting report has been downloaded (cached)",
+					duration: 3000,
+				});
+				return;
+			} catch (error) {
+				toast.error("Failed to download PDF", {
+					description:
+						error instanceof Error
+							? error.message
+							: "An unexpected error occurred while downloading the PDF",
+					duration: 5000,
+				});
+				return;
+			}
+		}
+
+		// If PDF is currently loading, just return (download will happen automatically)
+		if (isPdfLoading) {
+			return;
+		}
+
+		// If we don't have cached data, trigger the fetch
+		if (!shouldFetchPdf) {
+			setShouldFetchPdf(true);
+			return;
+		}
+
+		// If there's an error with PDF fetch, fall back to direct download
+		if (pdfError) {
+			try {
+				await BikeFittingService.downloadPdf(record.id, {
+					fullName: record.fullName,
+					date: record.date,
+				});
+				toast.success("PDF downloaded successfully", {
+					description: "The bike fitting report has been downloaded",
+					duration: 3000,
+				});
+			} catch (error) {
+				toast.error("Failed to download PDF", {
+					description:
+						error instanceof Error
+							? error.message
+							: "An unexpected error occurred while downloading the PDF",
+					duration: 5000,
+				});
+			}
 		}
 	};
 
@@ -141,6 +286,11 @@ export default function ViewPage() {
 		const filteredData = Object.fromEntries(
 			Object.entries(data).filter(([key]) => !excludeFields.includes(key)),
 		);
+
+		// Add fitterFullName from the record level (not from fitter object)
+		if (record?.fitterFullName) {
+			filteredData.fitterFullName = record.fitterFullName;
+		}
 
 		// Create CSV headers and values
 		const headers = Object.keys(filteredData);

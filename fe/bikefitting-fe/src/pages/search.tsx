@@ -156,7 +156,7 @@ export default function SearchPage() {
 		return (
 			<Link
 				to="/view/$id"
-				params={{ id: record.id.toString() }}
+				params={{ id: record.id }}
 				className="block hover:bg-muted/50 transition-colors rounded-md p-3 mx-2"
 			>
 				<div className="flex items-center justify-between">

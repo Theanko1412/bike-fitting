@@ -9,16 +9,84 @@ import {
 	cyclingFrequency,
 	fitters,
 } from "@/config/form-config";
+import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 interface GeneralInformationStepProps {
 	formData: any;
 	handleInputChange: (field: string, value: any) => void;
+	onValidationChange?: (isValid: boolean) => void;
 }
 
 export function GeneralInformationStep({
 	formData,
 	handleInputChange,
+	onValidationChange,
 }: GeneralInformationStepProps) {
+	const [validationErrors, setValidationErrors] = useState<{
+		fullName?: string;
+		email?: string;
+	}>({});
+
+	// Email validation regex
+	const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+
+	const validateFullName = (value: string): string | undefined => {
+		if (!value || value.trim().length === 0) {
+			return "Full name is required";
+		}
+		return undefined;
+	};
+
+	const validateEmail = (value: string): string | undefined => {
+		if (!value || value.trim().length === 0) {
+			return "Email is required";
+		}
+		if (!emailRegex.test(value)) {
+			return "Please enter a valid email address";
+		}
+		return undefined;
+	};
+
+	const handleFieldChange = (field: string, value: any) => {
+		// Update the form data
+		handleInputChange(field, value);
+
+		// Validate the specific field
+		if (field === "fullName") {
+			const error = validateFullName(value);
+			setValidationErrors((prev) => ({
+				...prev,
+				fullName: error,
+			}));
+		} else if (field === "email") {
+			const error = validateEmail(value);
+			setValidationErrors((prev) => ({
+				...prev,
+				email: error,
+			}));
+		}
+	};
+
+	// Check validation status and notify parent
+	useEffect(() => {
+		const fullNameError = validateFullName(formData.fullName);
+		const emailError = validateEmail(formData.email);
+
+		const isValid = !fullNameError && !emailError;
+
+		// Update validation errors if needed
+		setValidationErrors({
+			fullName: fullNameError,
+			email: emailError,
+		});
+
+		// Notify parent of validation status
+		if (onValidationChange) {
+			onValidationChange(isValid);
+		}
+	}, [formData.fullName, formData.email, onValidationChange]);
+
 	return (
 		<>
 			<div className="space-y-2 mx-1">
@@ -33,19 +101,38 @@ export function GeneralInformationStep({
 				<Label className="text-base font-medium">Full Name</Label>
 				<Input
 					value={formData.fullName}
-					onChange={(e) => handleInputChange("fullName", e.target.value)}
+					onChange={(e) => handleFieldChange("fullName", e.target.value)}
 					placeholder="Name Surname"
-					className="h-12"
+					className={cn(
+						"h-12",
+						validationErrors.fullName &&
+							"border-red-500 focus-visible:ring-red-500",
+					)}
 				/>
+				{validationErrors.fullName && (
+					<p className="text-sm text-red-500">{validationErrors.fullName}</p>
+				)}
 			</div>
 			<div className="space-y-2 mx-1">
 				<Label className="text-base font-medium">Email</Label>
 				<Input
 					value={formData.email}
-					onChange={(e) => handleInputChange("email", e.target.value)}
+					onChange={(e) => handleFieldChange("email", e.target.value)}
 					placeholder="Email"
-					className="h-12"
+					type="email"
+					autoComplete="username"
+					autoCapitalize="none"
+					autoCorrect="off"
+					spellCheck="false"
+					className={cn(
+						"h-12",
+						validationErrors.email &&
+							"border-red-500 focus-visible:ring-red-500",
+					)}
 				/>
+				{validationErrors.email && (
+					<p className="text-sm text-red-500">{validationErrors.email}</p>
+				)}
 			</div>
 			<div className="space-y-2 mx-1">
 				<Label className="text-base font-medium">Phone</Label>

@@ -5,6 +5,6 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 
-interface IBikeFittingRepository: JpaRepository<BikeFittingDAO, Long> {
+interface IBikeFittingRepository : JpaRepository<BikeFittingDAO, String> {
     fun findByFullNameContainingIgnoreCase(fullName: String, pageable: Pageable): Page<BikeFittingDAO>
 }

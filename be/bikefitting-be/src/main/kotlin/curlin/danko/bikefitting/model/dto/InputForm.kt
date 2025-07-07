@@ -1,6 +1,7 @@
 package curlin.danko.bikefitting.model.dto
 
 import curlin.danko.bikefitting.model.dao.BikeFittingDAO
+import curlin.danko.bikefitting.model.dao.generateNumericNanoId
 import java.time.LocalDate
 
 data class InputForm(
@@ -133,30 +134,45 @@ data class InputForm(
     val cleatForAftPlacementLeft: String,
     val cleatForAftPlacementRight: String,
     val cleatLiftLeft: Double,
-    val cleatLiftRight: Double
+    val cleatLiftRight: Double,
 ) {
     init {
-        if(!email.matches(Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"))) throw IllegalArgumentException(
-            "Invalid email format: $email - must be a valid email address."
-        )
-        if(fullName.isBlank()) throw IllegalArgumentException(
-            "Full name cannot be empty."
-        )
+        if (!email.matches(Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"))) {
+            throw IllegalArgumentException(
+                "Invalid email format: $email - must be a valid email address.",
+            )
+        }
+        if (fullName.isBlank()) {
+            throw IllegalArgumentException(
+                "Full name cannot be empty.",
+            )
+        }
+        if (fullName.length > 100) {
+            throw IllegalArgumentException(
+                "Full name is too long (max 100 characters).",
+            )
+        }
+        if (phone.length > 20) {
+            throw IllegalArgumentException(
+                "Phone number is too long (max 20 characters).",
+            )
+        }
     }
 }
 
 data class Fitter(
     val fullName: String,
     val email: String,
-    val phone: String
+    val phone: String,
 )
 
 fun InputForm.toDAO(): BikeFittingDAO {
     return BikeFittingDAO(
+        id = generateNumericNanoId(),
         fullName = this.fullName,
         fitterFullName = this.fitter.fullName,
         date = this.date,
         jsonForm = this,
-        pdfFile = null
+        pdfFile = null,
     )
 }

@@ -24,6 +24,7 @@ import {
 import { useVisibilityChange } from "@/hooks/useVisibilityChange";
 import { isFormDataModified } from "@/utils/debugFormPersistence";
 import { BikeFittingService } from "../services/bikeFittingService";
+import { SubmissionFailureDialog } from "./SubmissionFailureDialog";
 import { FinalBikeMeasurementStep } from "./steps/final-bike-measurement-step";
 import { FullBodyAssessmentStep } from "./steps/full-body-assessment-step";
 import { GeneralInformationStep } from "./steps/general-information-step";
@@ -46,6 +47,9 @@ export function BikeFittingForm() {
 	const [isAutoSaving, setIsAutoSaving] = useState(false);
 	const [showRestorePrompt, setShowRestorePrompt] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [showFailureDialog, setShowFailureDialog] = useState(false);
+	const [failureError, setFailureError] = useState("");
+	const [failedFormData, setFailedFormData] = useState<any>(null);
 	const navigate = useNavigate();
 
 	const {
@@ -238,12 +242,8 @@ export function BikeFittingForm() {
 		try {
 			// Normalize form data to ensure all required fields are present
 			const normalizedData = normalizeFormData(formData);
-			console.log("Submitting form data:", normalizedData);
-
 			// Submit to backend using service layer
 			const response = await BikeFittingService.submitForm(normalizedData);
-
-			console.log("Form submitted successfully:", response);
 
 			// Show success notification
 			toast.success("Form submitted successfully!", {
@@ -265,14 +265,34 @@ export function BikeFittingForm() {
 		} catch (error) {
 			console.error("Form submission failed:", error);
 
-			// Show error notification
-			toast.error("Failed to submit form", {
-				description:
-					error instanceof Error
-						? error.message
-						: "An unexpected error occurred",
-				duration: 5000,
-			});
+			const errorMessage =
+				error instanceof Error ? error.message : "An unexpected error occurred";
+
+			// Check if this is a validation error (BAD_REQUEST)
+			// Backend provides proper validation feedback, so just show toast
+			const isBadRequest = errorMessage.startsWith("BAD_REQUEST:");
+
+			if (isBadRequest) {
+				// Show warning toast for validation errors - backend handles these properly
+				// Remove the "BAD_REQUEST: " prefix from the message
+				const cleanMessage = errorMessage.replace("BAD_REQUEST: ", "");
+				toast.warning("Validation failed", {
+					description: cleanMessage,
+					duration: 5000,
+				});
+			} else {
+				// For all other errors (network, server errors, etc.) show failure dialog
+				const normalizedData = normalizeFormData(formData);
+				setFailedFormData(normalizedData);
+				setFailureError(errorMessage);
+				setShowFailureDialog(true);
+
+				// Also show toast notification that request failed
+				toast.error("Request failed", {
+					description: errorMessage,
+					duration: 5000,
+				});
+			}
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -406,6 +426,14 @@ export function BikeFittingForm() {
 					</div>
 				</div>
 			</div>
+
+			{/* Submission Failure Dialog */}
+			<SubmissionFailureDialog
+				open={showFailureDialog}
+				onOpenChange={setShowFailureDialog}
+				formData={failedFormData}
+				error={failureError}
+			/>
 		</div>
 	);
 }

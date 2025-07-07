@@ -5,7 +5,7 @@ import java.time.LocalDate
 data class PdfDownloadData(
     val fullName: String,
     val date: LocalDate,
-    val pdfFile: ByteArray?
+    val pdfFile: ByteArray?,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

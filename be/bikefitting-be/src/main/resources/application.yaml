@@ -10,16 +10,67 @@ spring:
     hibernate:
       ddl-auto: update
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
+  jackson:
+    parser:
+      allow-unquoted-control-chars: false
+      strict-duplicate-detection: true
 
 server:
   port: 8080
   address: 0.0.0.0
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
 logging:
   level:
-    curlin.danko.bikefitting: DEBUG
-    org.springframework.web: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    curlin.danko.bikefitting: INFO
+    org.springframework.web: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Authentication configuration
+auth:
+  jwt:
+    secret: mySecretKey123!@#bikefitting2024$%^&*()_+
+    expiration: 604800000 # 7 days in milliseconds (7 * 24 * 60 * 60 * 1000)
+  users:
+    user:
+      username: user
+      password: userpassword
+      role: USER
+    admin:
+      username: admin
+      password: adminpassword
+      role: ADMIN
+  rate-limit:
+    max-attempts: 5
+    window-minutes: 15
+    enabled: true
+  cors:
+    allowed-origins:
+      - "http://localhost:3000"
+      - "http://192.168.1.11:3000"
+      - "http://192.168.1.*:3000"
+    allowed-methods:
+      - "GET"
+      - "POST"
+      - "PUT"
+      - "DELETE"
+      - "OPTIONS"
+    allowed-headers: "*"
+    allow-credentials: true
+    exposed-headers:
+      - "Content-Disposition"

@@ -6,16 +6,17 @@ export function ThemeToggle() {
 	const { theme, toggleTheme } = useTheme();
 
 	return (
-		<Button
-			variant="outline"
-			size="sm"
-			onClick={toggleTheme}
-			className="fixed bottom-8 left-1/2 transform -translate-x-1/2"
-		>
+		<Button variant="outline" size="sm" onClick={toggleTheme}>
 			{theme === "dark" ? (
-				<Sun className="h-4 w-4" />
+				<>
+					<Sun className="h-4 w-4" />
+					<p>Light Mode</p>
+				</>
 			) : (
-				<Moon className="h-4 w-4" />
+				<>
+					<Moon className="h-4 w-4" />
+					<p>Dark Mode</p>
+				</>
 			)}
 		</Button>
 	);
