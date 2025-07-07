@@ -5,9 +5,9 @@ import tailwindcss from '@tailwindcss/vite'
 import { resolve } from 'node:path'
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [viteReact(), tailwindcss()],
-  base: process.env.NODE_ENV === 'production' ? '/bike-fitting/' : '/',
+  base: command === 'build' ? '/bike-fitting/' : '/',
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
@@ -33,4 +33,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))
