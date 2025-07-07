@@ -22,18 +22,37 @@ export const steps = [
 	},
 ];
 
+// Fitter type definition
+export interface Fitter {
+	fullName: string;
+	email: string;
+	phone: string;
+}
+
 // Load fitters from environment variables (sensitive data)
-export const fitters = (() => {
+export const fitters: Fitter[] = (() => {
 	try {
 		const fittersJson = import.meta.env.VITE_FITTERS;
 		if (!fittersJson) {
-			console.warn('VITE_FITTERS environment variable not set, using fallback');
-			return [{ fullName: "Default Fitter", email: "email@email.com", phone: "+385 00 000 0000" }];
+			console.warn("VITE_FITTERS environment variable not set, using fallback");
+			return [
+				{
+					fullName: "Default Fitter",
+					email: "email@email.com",
+					phone: "+385 00 000 0000",
+				},
+			];
 		}
-		return JSON.parse(fittersJson);
+		return JSON.parse(fittersJson) as Fitter[];
 	} catch (error) {
-		console.error('Failed to parse VITE_FITTERS:', error);
-		return [{ fullName: "Default Fitter", email: "email@email.com", phone: "+385 00 000 0000" }];
+		console.error("Failed to parse VITE_FITTERS:", error);
+		return [
+			{
+				fullName: "Default Fitter",
+				email: "email@email.com",
+				phone: "+385 00 000 0000",
+			},
+		];
 	}
 })();
 
