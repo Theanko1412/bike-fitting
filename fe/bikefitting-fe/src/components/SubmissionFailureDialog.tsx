@@ -86,11 +86,11 @@ export function SubmissionFailureDialog({
 					</div>
 
 					{/* Instructions */}
-					<div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
-						<h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+					<div className="p-3 bg-muted dark:bg-muted border border-black-200 dark:border-black-800 rounded-md">
+						<h4 className="font-medium text-black dark:text-primary-foreground mb-2">
 							What to do:
 						</h4>
-						<ol className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+						<ol className="text-sm text-black dark:text-primary-foreground space-y-1">
 							<li>1. Download the form data using the button below</li>
 							<li>2. Contact me with downloaded file</li>
 						</ol>

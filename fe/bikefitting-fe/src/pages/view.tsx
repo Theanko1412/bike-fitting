@@ -375,7 +375,7 @@ export default function ViewPage() {
 		const sign = diff > 0 ? "+" : "";
 
 		return (
-			<span className="ml-2 text-xs px-2 py-1 rounded-full font-medium bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200">
+			<span className="ml-2 text-xs px-2 py-1 rounded-full font-medium bg-primary text-primary-foreground dark:bg-primary dark:text-primary-foreground">
 				{sign}
 				{diff}
 			</span>

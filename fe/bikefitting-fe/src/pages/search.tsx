@@ -292,7 +292,7 @@ export default function SearchPage() {
 									{debouncedSearchTerm && ` matching "${debouncedSearchTerm}"`}
 								</div>
 								<Button
-									variant="outline"
+									variant="default"
 									size="sm"
 									onClick={() => refetch()}
 									disabled={isRefetching}
@@ -317,7 +317,7 @@ export default function SearchPage() {
 									</div>
 								)}
 								<Button
-									variant="outline"
+									variant="default"
 									size="sm"
 									onClick={() => refetch()}
 									disabled={isRefetching}
