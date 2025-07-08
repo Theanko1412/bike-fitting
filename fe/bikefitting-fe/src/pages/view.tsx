@@ -494,7 +494,7 @@ export default function ViewPage() {
 								</label>
 								<a
 									href={createMailtoUrl(formData.email)}
-									className="text-lg text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-2 transition-colors cursor-pointer"
+									className="text-lg text-primary hover:text-blue-800 dark:text-primary dark:brightness-200 dark:hover:text-blue-700 flex items-center gap-2 transition-colors cursor-pointer"
 								>
 									<Mail className="h-4 w-4" />
 									{formData.email}
