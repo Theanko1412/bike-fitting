@@ -4,10 +4,9 @@ const CACHE_NAME = 'bike-fitting-app-v1';
 const urlsToCache = [
   '/',
   '/manifest.json',
-  '/favicon.svg',
-  '/bike-icon.svg',
-  '/bike-192.png',
-  '/bike-512.png',
+          '/s.svg',
+  '/s192.png',
+  '/s512.png',
 ];
 
 // Install service worker - cache only essential assets
