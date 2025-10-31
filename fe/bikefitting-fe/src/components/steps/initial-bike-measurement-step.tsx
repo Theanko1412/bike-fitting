@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { ToggleGroup } from "@/components/ui/toggle-group";
 import {
 	bikeBrands,
+	bikeTypes,
 	bikeYears,
 	pedalBrands,
 	ranges,
@@ -28,12 +29,29 @@ export function InitialBikeMeasurementStep({
 				options={bikeBrands}
 			/>
 
+			<HybridSelector
+				label="Bike Type"
+				value={formData.bikeType}
+				onChange={(value) => handleInputChange("bikeType", value)}
+				options={bikeTypes}
+			/>
+
 			<div className="space-y-2 mx-1">
 				<Label className="text-base font-medium">Bike Model</Label>
 				<Input
 					value={formData.bikeModel}
 					onChange={(e) => handleInputChange("bikeModel", e.target.value)}
 					placeholder="Enter bike model"
+					className="h-12"
+				/>
+			</div>
+
+			<div className="space-y-2 mx-1">
+				<Label className="text-base font-medium">Bike Size</Label>
+				<Input
+					value={formData.bikeSize}
+					onChange={(e) => handleInputChange("bikeSize", e.target.value)}
+					placeholder="Enter bike size"
 					className="h-12"
 				/>
 			</div>
@@ -106,16 +124,6 @@ export function InitialBikeMeasurementStep({
 				unit="mm"
 			/>
 
-			<ToggleGroup
-				label="Saddle Direction"
-				options={[
-					{ value: "aft", label: "Aft" },
-					{ value: "fore", label: "Fore" },
-				]}
-				value={formData.saddleDirection}
-				onChange={(value) => handleInputChange("saddleDirection", value)}
-			/>
-
 			<HybridSelector
 				label="Handlebar Width"
 				value={formData.handlebarWidth}
@@ -184,30 +192,20 @@ export function InitialBikeMeasurementStep({
 				<div className="grid grid-cols-2 gap-4">
 					<div>
 						<Label className="text-sm text-muted-foreground block">Left</Label>
-						<ToggleGroup
+						<HybridSelector
 							label=""
-							options={[
-								{ value: "none", label: "None" },
-								{ value: "low", label: "Low" },
-								{ value: "medium", label: "Medium" },
-								{ value: "high", label: "High" },
-							]}
 							value={formData.footbedLeft}
 							onChange={(value) => handleInputChange("footbedLeft", value)}
+							options={ranges.footbed}
 						/>
 					</div>
 					<div>
-						<Label className="text-sm text-muted-foreground block">Right</Label>
-						<ToggleGroup
+						<Label className="text-sm text-muted-foreground block">Left</Label>
+						<HybridSelector
 							label=""
-							options={[
-								{ value: "none", label: "None" },
-								{ value: "low", label: "Low" },
-								{ value: "medium", label: "Medium" },
-								{ value: "high", label: "High" },
-							]}
 							value={formData.footbedRight}
 							onChange={(value) => handleInputChange("footbedRight", value)}
+							options={ranges.footbed}
 						/>
 					</div>
 				</div>

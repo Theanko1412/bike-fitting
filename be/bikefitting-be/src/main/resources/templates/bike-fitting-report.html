@@ -435,12 +435,12 @@
         <div class="header">
             <div class="header-content">
                 <div class="company-info">
-                    <div class="company-logo">ProFit Cycling</div>
-                    <div class="company-tagline">Professional Bike Fitting Services</div>
+                    <div class="company-logo" th:text="${company.name}">Your Company Name</div>
+                    <div class="company-tagline" th:text="${company.tagline}">Professional Bike Fitting Services</div>
                     <div class="company-details">
-                        123 Cycling Avenue, Bike City, BC 12345<br/>
-                        Phone: (555) 123-4567 | Email: info@profitcycling.com<br/>
-                        www.profitcycling.com
+                        <span th:text="${company.address}">Your Address</span><br/>
+                        Phone: <span th:text="${company.phone}">Your Phone</span> | Email: <span th:text="${company.email}">your-email@domain.com</span><br/>
+                        <span th:text="${company.website}">www.yourwebsite.com</span>
                     </div>
                 </div>
                 <div class="report-title">
@@ -467,8 +467,12 @@
                         <span class="value" th:text="${form.email}">-</span>
                     </div>
                     <div class="card-item">
-                        <span class="label">Experience:</span>
-                        <span class="value" th:text="${form.cyclingExperience}">-</span>
+                        <span class="label">Experience Level:</span>
+                        <span class="value" th:text="${form.cyclingExperienceLevel}">-</span>
+                    </div>
+                    <div class="card-item">
+                        <span class="label">Experience Years:</span>
+                        <span class="value" th:text="${form.cyclingExperienceYears}">-</span>
                     </div>
                     <div class="card-item">
                         <span class="label">Frequency:</span>
@@ -505,8 +509,50 @@
             <div class="measurement-container">
                 <div class="measurement-row">
                     <div class="measurement-item">
-                        <div class="measurement-label">Ischial Tuberosity</div>
+                        <div class="measurement-label">Ischial Tuberosity:</div>
                         <div class="measurement-value" th:text="${form.ischialTuberosity} + 'mm'">-</div>
+                    </div>
+                    <div class="measurement-item">
+                        <div class="measurement-label">Inseam:</div>
+                        <div class="measurement-value" th:text="${form.inseam} + 'cm'">-</div>
+                    </div>
+                    <div class="measurement-item">
+                        <div class="measurement-label">Shoulder width:</div>
+                        <div class="measurement-value" th:text="${form.shoulderWidth} + 'cm'">-</div>
+                    </div>
+                    <div class="measurement-item">
+                        <div class="measurement-label">Foot Length</div>
+                        <div class="bilateral-measurement">
+                            <div>
+                                <div class="side-label">Left:</div>
+                                <div class="side-value" th:text="${form.footLengthLeft}">-</div>
+                            </div>
+                            <div>
+                                <div class="side-label">Right:</div>
+                                <div class="side-value" th:text="${form.footLengthRight}">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="measurement-item">
+                        <div class="measurement-label">Foot Width</div>
+                        <div class="bilateral-measurement">
+                            <div>
+                                <div class="side-label">Left:</div>
+                                <div class="side-value" th:text="${form.footWidthLeft}">-</div>
+                            </div>
+                            <div>
+                                <div class="side-label">Right:</div>
+                                <div class="side-value" th:text="${form.footWidthRight}">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="measurement-item">
+                        <div class="measurement-label">Leg Length Dicrepency:</div>
+                        <div class="measurement-value" th:text="${form.legLengthDiscrepancy}">-</div>
+                    </div>
+                    <div class="measurement-item">
+                        <div class="measurement-label">Leg Length Dicrepency Difference:</div>
+                        <div class="measurement-value" th:text="${form.legLengthDiscrepancyDifference}">-</div>
                     </div>
                     <div class="measurement-item">
                         <div class="measurement-label">Forefoot Angulation Type</div>
@@ -541,21 +587,47 @@
                         <div class="bilateral-measurement">
                             <div>
                                 <div class="side-label">Left:</div>
-                                <div class="side-value" th:text="${form.hipROMLeft} + '°'">-</div>
+                                <div class="side-value" th:text="${form.hipROMLeft}">-</div>
                             </div>
                             <div>
                                 <div class="side-label">Right:</div>
-                                <div class="side-value" th:text="${form.hipROMRight} + '°'">-</div>
+                                <div class="side-value" th:text="${form.hipROMRight}">-</div>
                             </div>
                         </div>
                     </div>
                     <div class="measurement-item">
                         <div class="measurement-label">Shoulder ROM</div>
-                        <div class="measurement-value" th:text="${form.shoulderROM} + '°'">-</div>
+                        <div class="measurement-value" th:text="${form.shoulderROM}">-</div>
                     </div>
                     <div class="measurement-item">
                         <div class="measurement-label">Q Angle</div>
                         <div class="measurement-value" th:text="${form.advQAngle} + '°'">-</div>
+                    </div>
+                    <div class="measurement-item">
+                        <div class="measurement-label">Ankle ROM Plantar</div>
+                        <div class="bilateral-measurement">
+                            <div>
+                                <div class="side-label">Left:</div>
+                                <div class="side-value" th:text="${form.ankleROMPlantarLeft}">-</div>
+                            </div>
+                            <div>
+                                <div class="side-label">Right:</div>
+                                <div class="side-value" th:text="${form.ankleROMPlantarRight}">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="measurement-item">
+                        <div class="measurement-label">Ankle ROM Dorsal</div>
+                        <div class="bilateral-measurement">
+                            <div>
+                                <div class="side-label">Left:</div>
+                                <div class="side-value" th:text="${form.ankleROMDorsalLeft}">-</div>
+                            </div>
+                            <div>
+                                <div class="side-label">Right:</div>
+                                <div class="side-value" th:text="${form.ankleROMDorsalRight}">-</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -574,12 +646,19 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td><strong>Bike</strong></td>
-                        <td th:text="${form.bikeBrand} + ' (' + ${form.bikeYear} + ')'">-</td>
-                        <td th:text="${form.finalBikeBrand} + ' (' + ${form.finalBikeYear} + ')'">-</td>
-                        <td th:text="${form.bikeBrand == form.finalBikeBrand && form.bikeYear == form.finalBikeYear ? 'No change' : 'Changed'}">-</td>
-                    </tr>
+                <tr>
+                    <td><strong>Bike</strong></td>
+                    <td th:text="${form.bikeBrand} + ' ' + ${form.bikeModel} + ' ' + ${form.bikeType} + ' ' + ${form.bikeSize} + ' (' + ${form.bikeYear} + ')'">-</td>
+                    <td th:text="${form.finalBikeBrand} + ' ' + ${form.finalBikeModel} + ' ' + ${form.finalBikeType} + ' ' + ${form.finalBikeSize} + ' (' + ${form.finalBikeYear} + ')'">-</td>
+                    <td th:text="${
+            form.bikeBrand == form.finalBikeBrand &&
+            form.bikeModel == form.finalBikeModel &&
+            form.bikeType == form.finalBikeType &&
+            form.bikeSize == form.finalBikeSize &&
+            form.bikeYear == form.finalBikeYear
+            ? 'No change' : 'Changed'
+        }">-</td>
+                </tr>
                     <tr>
                         <td><strong>Saddle Width</strong></td>
                         <td th:text="${form.saddleWidth} + 'mm'">-</td>
@@ -725,9 +804,9 @@
 
         <!-- Footer -->
         <div class="footer">
-            <p><strong>ProFit Cycling</strong> - Professional Bike Fitting Services</p>
+            <p><strong th:text="${company.name}">Your Company Name</strong> - <span th:text="${company.tagline}">Professional Bike Fitting Services</span></p>
             <p th:text="'This report was generated on ' + ${dateFormatted} + ' by ' + ${form.fitter.fullName} + ', Certified Bike Fitter'">Report generated</p>
-            <p>For questions about this report, please contact us at info@profitcycling.com or (555) 123-4567</p>
+            <p>For questions about this report, please contact us at <span th:text="${company.email}">your-email@domain.com</span> or <span th:text="${company.phone}">Your Phone</span></p>
         </div>
     </div>
     <!-- End of content -->

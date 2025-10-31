@@ -24,6 +24,70 @@ export function FullBodyAssessmentStep({
 				unit="mm"
 			/>
 
+			<HybridSelector
+				label="Height"
+				value={formData.height}
+				onChange={(value) => handleInputChange("height", value)}
+				options={ranges.height}
+				unit="cm"
+			/>
+
+			<HybridSelector
+				label="Inseam"
+				value={formData.inseam}
+				onChange={(value) => handleInputChange("inseam", value)}
+				options={ranges.inseam}
+				unit="cm"
+			/>
+
+			<HybridSelector
+				label="Shoulder width"
+				value={formData.shoulderWidth}
+				onChange={(value) => handleInputChange("shoulderWidth", value)}
+				options={ranges.shoulderWidth}
+				unit="cm"
+			/>
+
+			<div className="space-y-2">
+				<Label className="text-base font-medium">Foot Length</Label>
+				<div className="grid grid-cols-2 gap-2">
+					<HybridSelector
+						label="Left"
+						value={formData.footLengthLeft}
+						onChange={(value) => handleInputChange("footLengthLeft", value)}
+						options={ranges.footLength}
+						unit="mm"
+					/>
+					<HybridSelector
+						label="Right"
+						value={formData.footLengthRight}
+						onChange={(value) => handleInputChange("footLengthRight", value)}
+						options={ranges.footLength}
+						unit="mm"
+					/>
+				</div>
+			</div>
+
+			<div className="space-y-2">
+				<Label className="text-base font-medium">Foot Width</Label>
+				<div className="grid grid-cols-2 gap-2">
+					<HybridSelector
+						label="Left"
+						value={formData.footWidthLeft}
+						onChange={(value) => handleInputChange("footWidthLeft", value)}
+						options={ranges.footWidth}
+						unit="mm"
+					/>
+					<HybridSelector
+						label="Right"
+						value={formData.footWidthRight}
+						onChange={(value) => handleInputChange("footWidthRight", value)}
+						options={ranges.footWidth}
+						unit="mm"
+					/>
+				</div>
+			</div>
+
 			<div className="space-y-2">
 				<Label className="text-base font-medium">
 					Forefoot Angulation Type
@@ -67,7 +131,7 @@ export function FullBodyAssessmentStep({
 								{ value: "normal", label: "Normal" },
 								{ value: "mild", label: "Mild" },
 								{ value: "moderate", label: "Moderate" },
-								{ value: "severe", label: "Severe" },
+								{ value: "significant", label: "Significant" },
 							]}
 							value={formData.forefootAngulationSeverityLeft}
 							onChange={(value) =>
@@ -83,7 +147,7 @@ export function FullBodyAssessmentStep({
 								{ value: "normal", label: "Normal" },
 								{ value: "mild", label: "Mild" },
 								{ value: "moderate", label: "Moderate" },
-								{ value: "severe", label: "Severe" },
+								{ value: "significant", label: "Significant" },
 							]}
 							value={formData.forefootAngulationSeverityRight}
 							onChange={(value) =>
@@ -176,9 +240,9 @@ export function FullBodyAssessmentStep({
 						<ToggleGroup
 							label=""
 							options={[
-								{ value: "neutral", label: "Neutral" },
-								{ value: "knock-knee", label: "Knock-knee" },
-								{ value: "bow-leg", label: "Bow-leg" },
+								{ value: "Normal", label: "Normal" },
+								{ value: "Varus", label: "Varus" },
+								{ value: "Valgus", label: "Valgus" },
 							]}
 							value={formData.lowerExtremityAlignmentLeft}
 							onChange={(value) =>
@@ -191,9 +255,9 @@ export function FullBodyAssessmentStep({
 						<ToggleGroup
 							label=""
 							options={[
-								{ value: "neutral", label: "Neutral" },
-								{ value: "knock-knee", label: "Knock-knee" },
-								{ value: "bow-leg", label: "Bow-leg" },
+								{ value: "Normal", label: "Normal" },
+								{ value: "Varus", label: "Varus" },
+								{ value: "Valgus", label: "Valgus" },
 							]}
 							value={formData.lowerExtremityAlignmentRight}
 							onChange={(value) =>
@@ -208,13 +272,17 @@ export function FullBodyAssessmentStep({
 				<Label className="text-base font-medium">
 					Advanced Lower Extremity Alignment
 				</Label>
-				<Input
+				<ToggleGroup
+					label=""
+					options={[
+						{ value: "Tibia", label: "Tibia" },
+						{ value: "Curved", label: "Curved" },
+						{ value: "Normal", label: "Normal" },
+					]}
 					value={formData.advLowerExtremityAlignment}
-					onChange={(e) =>
-						handleInputChange("advLowerExtremityAlignment", e.target.value)
+					onChange={(value) =>
+						handleInputChange("advLowerExtremityAlignment", value)
 					}
-					placeholder="Enter additional notes"
-					className="h-12"
 				/>
 			</div>
 
@@ -235,7 +303,7 @@ export function FullBodyAssessmentStep({
 					{ value: "normal", label: "Normal" },
 					{ value: "kyphotic", label: "Kyphotic" },
 					{ value: "lordotic", label: "Lordotic" },
-					{ value: "flat", label: "Flat" },
+					{ value: "scoliosis", label: "Scoliosis" },
 				]}
 				value={formData.spinalCurveEvaluation}
 				onChange={(value) => handleInputChange("spinalCurveEvaluation", value)}
@@ -311,12 +379,14 @@ export function FullBodyAssessmentStep({
 				onChange={(value) => handleInputChange("cervicalSpineROM", value)}
 			/>
 
-			<HybridSelector
+			<ToggleGroup
 				label="Shoulder ROM"
+				options={[
+					{ value: "limited", label: "Limited" },
+					{ value: "full", label: "Full" },
+				]}
 				value={formData.shoulderROM}
 				onChange={(value) => handleInputChange("shoulderROM", value)}
-				options={ranges.shoulderROM}
-				unit="°"
 			/>
 
 			<div className="space-y-2">
@@ -369,7 +439,8 @@ export function FullBodyAssessmentStep({
 						<ToggleGroup
 							label=""
 							options={[
-								{ value: "limited", label: "Limited" },
+								{ value: "limited (external)", label: "Limited - External" },
+								{ value: "limited (internal)", label: "Limited - Internal" },
 								{ value: "full", label: "Full" },
 							]}
 							value={formData.advPassiveHipROMLeft}
@@ -383,7 +454,8 @@ export function FullBodyAssessmentStep({
 						<ToggleGroup
 							label=""
 							options={[
-								{ value: "limited", label: "Limited" },
+								{ value: "limited (external)", label: "Limited - External" },
+								{ value: "limited (internal)", label: "Limited - Internal" },
 								{ value: "full", label: "Full" },
 							]}
 							value={formData.advPassiveHipROMRight}
@@ -397,47 +469,69 @@ export function FullBodyAssessmentStep({
 
 			<div className="space-y-2">
 				<Label className="text-base font-medium">Ankle ROM Plantar</Label>
-				<div className="grid grid-cols-2 gap-2">
-					<HybridSelector
-						label="Left"
-						value={formData.ankleROMPlantar‌Left}
-						onChange={(value) =>
-							handleInputChange("ankleROMPlantar‌Left", value)
-						}
-						options={ranges.ankleROMPlantar}
-						unit="°"
-					/>
-					<HybridSelector
-						label="Right"
-						value={formData.ankleROMPlantar‌Right}
-						onChange={(value) =>
-							handleInputChange("ankleROMPlantar‌Right", value)
-						}
-						options={ranges.ankleROMPlantar}
-						unit="°"
-					/>
+				<div className="grid grid-cols-2 gap-4">
+					<div>
+						<Label className="text-sm text-muted-foreground block">Left</Label>
+						<ToggleGroup
+							label=""
+							options={[
+								{ value: "limited", label: "Limited" },
+								{ value: "full", label: "Full" },
+							]}
+							value={formData.ankleROMPlantarLeft}
+							onChange={(value) =>
+								handleInputChange("ankleROMPlantarLeft", value)
+							}
+						/>
+					</div>
+					<div>
+						<Label className="text-sm text-muted-foreground block">Right</Label>
+						<ToggleGroup
+							label=""
+							options={[
+								{ value: "limited", label: "Limited" },
+								{ value: "full", label: "Full" },
+							]}
+							value={formData.ankleROMPlantarRight}
+							onChange={(value) =>
+								handleInputChange("ankleROMPlantarRight", value)
+							}
+						/>
+					</div>
 				</div>
 			</div>
 
 			<div className="space-y-2">
 				<Label className="text-base font-medium">Ankle ROM Dorsal</Label>
-				<div className="grid grid-cols-2 gap-2">
-					<HybridSelector
-						label="Left"
-						value={formData.ankleROMDorsalLeft}
-						onChange={(value) => handleInputChange("ankleROMDorsalLeft", value)}
-						options={ranges.ankleROMDorsal}
-						unit="°"
-					/>
-					<HybridSelector
-						label="Right"
-						value={formData.ankleROMDorsalRight}
-						onChange={(value) =>
-							handleInputChange("ankleROMDorsalRight", value)
-						}
-						options={ranges.ankleROMDorsal}
-						unit="°"
-					/>
+				<div className="grid grid-cols-2 gap-4">
+					<div>
+						<Label className="text-sm text-muted-foreground block">Left</Label>
+						<ToggleGroup
+							label=""
+							options={[
+								{ value: "limited", label: "Limited" },
+								{ value: "full", label: "Full" },
+							]}
+							value={formData.ankleROMDorsalLeft}
+							onChange={(value) =>
+								handleInputChange("ankleROMDorsalLeft", value)
+							}
+						/>
+					</div>
+					<div>
+						<Label className="text-sm text-muted-foreground block">Right</Label>
+						<ToggleGroup
+							label=""
+							options={[
+								{ value: "limited", label: "Limited" },
+								{ value: "full", label: "Full" },
+							]}
+							value={formData.ankleROMDorsalRight}
+							onChange={(value) =>
+								handleInputChange("ankleROMDorsalRight", value)
+							}
+						/>
+					</div>
 				</div>
 			</div>
 
@@ -464,12 +558,26 @@ export function FullBodyAssessmentStep({
 				label="Leg Length Discrepancy"
 				options={[
 					{ value: "none", label: "None" },
-					{ value: "minor", label: "Minor" },
-					{ value: "major", label: "Major" },
+					{ value: "right tibia longer", label: "Right Tibia Longer" },
+					{ value: "left tibia longer", label: "Left Tibia Longer" },
+					{ value: "right fibula longer", label: "Right Fibula Longer" },
+					{ value: "left fibula longer", label: "Left Fibula Longer" },
 				]}
 				value={formData.legLengthDiscrepancy}
 				onChange={(value) => handleInputChange("legLengthDiscrepancy", value)}
 			/>
+
+			{formData.legLengthDiscrepancy !== "none" && (
+				<HybridSelector
+					label="Leg Length Discrepancy - Difference"
+					value={formData.legLengthDiscrepancyDifference}
+					onChange={(value) =>
+						handleInputChange("legLengthDiscrepancyDifference", value)
+					}
+					options={ranges.legLengthDiscrepancyDifference}
+					unit="mm"
+				/>
+			)}
 
 			{/* Thomas Test */}
 			<div className="space-y-2">
@@ -485,7 +593,7 @@ export function FullBodyAssessmentStep({
 								{ value: "normal", label: "Normal" },
 								{ value: "mild", label: "Mild" },
 								{ value: "moderate", label: "Moderate" },
-								{ value: "severe", label: "Severe" },
+								{ value: "significant", label: "Significant" },
 							]}
 							value={formData.itBandLeft}
 							onChange={(value) => handleInputChange("itBandLeft", value)}
@@ -499,7 +607,7 @@ export function FullBodyAssessmentStep({
 								{ value: "normal", label: "Normal" },
 								{ value: "mild", label: "Mild" },
 								{ value: "moderate", label: "Moderate" },
-								{ value: "severe", label: "Severe" },
+								{ value: "significant", label: "Significant" },
 							]}
 							value={formData.itBandRight}
 							onChange={(value) => handleInputChange("itBandRight", value)}
@@ -521,7 +629,7 @@ export function FullBodyAssessmentStep({
 								{ value: "normal", label: "Normal" },
 								{ value: "mild", label: "Mild" },
 								{ value: "moderate", label: "Moderate" },
-								{ value: "severe", label: "Severe" },
+								{ value: "significant", label: "Significant" },
 							]}
 							value={formData.hipLeft}
 							onChange={(value) => handleInputChange("hipLeft", value)}
@@ -535,7 +643,7 @@ export function FullBodyAssessmentStep({
 								{ value: "normal", label: "Normal" },
 								{ value: "mild", label: "Mild" },
 								{ value: "moderate", label: "Moderate" },
-								{ value: "severe", label: "Severe" },
+								{ value: "significant", label: "Significant" },
 							]}
 							value={formData.hipRight}
 							onChange={(value) => handleInputChange("hipRight", value)}
@@ -557,7 +665,7 @@ export function FullBodyAssessmentStep({
 								{ value: "normal", label: "Normal" },
 								{ value: "mild", label: "Mild" },
 								{ value: "moderate", label: "Moderate" },
-								{ value: "severe", label: "Severe" },
+								{ value: "significant", label: "Significant" },
 							]}
 							value={formData.quadLeft}
 							onChange={(value) => handleInputChange("quadLeft", value)}
@@ -571,7 +679,7 @@ export function FullBodyAssessmentStep({
 								{ value: "normal", label: "Normal" },
 								{ value: "mild", label: "Mild" },
 								{ value: "moderate", label: "Moderate" },
-								{ value: "severe", label: "Severe" },
+								{ value: "significant", label: "Significant" },
 							]}
 							value={formData.quadRight}
 							onChange={(value) => handleInputChange("quadRight", value)}
@@ -663,9 +771,8 @@ export function FullBodyAssessmentStep({
 						<ToggleGroup
 							label=""
 							options={[
-								{ value: "neutral", label: "Neutral" },
-								{ value: "pronated", label: "Pronated" },
-								{ value: "supinated", label: "Supinated" },
+								{ value: "stable", label: "Stable" },
+								{ value: "unstable", label: "Unstable" },
 							]}
 							value={formData.footLeft}
 							onChange={(value) => handleInputChange("footLeft", value)}
@@ -676,9 +783,8 @@ export function FullBodyAssessmentStep({
 						<ToggleGroup
 							label=""
 							options={[
-								{ value: "neutral", label: "Neutral" },
-								{ value: "pronated", label: "Pronated" },
-								{ value: "supinated", label: "Supinated" },
+								{ value: "stable", label: "Stable" },
+								{ value: "unstable", label: "Unstable" },
 							]}
 							value={formData.footRight}
 							onChange={(value) => handleInputChange("footRight", value)}
@@ -757,24 +863,34 @@ export function FullBodyAssessmentStep({
 
 			<div className="space-y-2">
 				<Label className="text-base font-medium">Advanced Active Hip ROM</Label>
-				<div className="grid grid-cols-2 gap-2">
-					<HybridSelector
-						label="Left"
+				<div>
+					<Label className="text-sm text-muted-foreground block">Left</Label>
+					<ToggleGroup
+						label=""
+						options={[
+							{ value: "neutral", label: "Neutral" },
+							{ value: "externally rotated", label: "Externally Rotated" },
+							{ value: "internally rotated", label: "Internally Rotated" },
+						]}
 						value={formData.advActiveHipROMLeft}
 						onChange={(value) =>
 							handleInputChange("advActiveHipROMLeft", value)
 						}
-						options={ranges.activeHipROM}
-						unit="°"
 					/>
-					<HybridSelector
-						label="Right"
+				</div>
+				<div>
+					<Label className="text-sm text-muted-foreground block">Right</Label>
+					<ToggleGroup
+						label=""
+						options={[
+							{ value: "neutral", label: "Neutral" },
+							{ value: "externally rotated", label: "Externally Rotated" },
+							{ value: "internally rotated", label: "Internally Rotated" },
+						]}
 						value={formData.advActiveHipROMRight}
 						onChange={(value) =>
 							handleInputChange("advActiveHipROMRight", value)
 						}
-						options={ranges.activeHipROM}
-						unit="°"
 					/>
 				</div>
 			</div>

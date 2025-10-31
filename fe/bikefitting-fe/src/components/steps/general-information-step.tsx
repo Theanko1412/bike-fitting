@@ -5,9 +5,10 @@ import { Label } from "@/components/ui/label";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { ToggleGroup } from "@/components/ui/toggle-group";
 import {
-	cyclingExperience,
+	cyclingExperienceLevel,
 	cyclingFrequency,
 	fitters,
+	ranges,
 } from "@/config/form-config";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
@@ -158,11 +159,23 @@ export function GeneralInformationStep({
 			</div>
 			<div className="space-y-2">
 				<HybridSelector
-					label="Cycling Experience"
-					value={formData.cyclingExperience}
-					onChange={(value) => handleInputChange("cyclingExperience", value)}
-					options={cyclingExperience}
+					label="Cycling Experience Level"
+					value={formData.cyclingExperienceLevel}
+					onChange={(value) =>
+						handleInputChange("cyclingExperienceLevel", value)
+					}
+					options={cyclingExperienceLevel}
 					unit=""
+				/>
+			</div>
+			<div className="space-y-2">
+				<HybridSelector
+					label="Cycling Experience Years"
+					value={formData.cyclingExperienceYears}
+					onChange={(value) =>
+						handleInputChange("cyclingExperienceYears", value)
+					}
+					options={ranges.cyclingExperienceYears}
 				/>
 			</div>
 			<div className="space-y-2">

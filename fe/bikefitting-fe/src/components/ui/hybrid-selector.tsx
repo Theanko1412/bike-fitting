@@ -1,5 +1,13 @@
 import { useState } from "react";
 import { Button } from "./button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "./dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "./drawer";
 import { Input } from "./input";
 import { Label } from "./label";
@@ -20,6 +28,8 @@ export const HybridSelector = ({
 	const [customValue, setCustomValue] = useState("");
 	const [isCustomEditing, setIsCustomEditing] = useState(false);
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+	const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+	const [pendingValue, setPendingValue] = useState<number | null>(null);
 
 	const isNumericMode = typeof value === "number";
 	const numericOptions = isNumericMode ? (options as number[]) : [];
@@ -29,11 +39,19 @@ export const HybridSelector = ({
 	const handleCustomSubmit = () => {
 		if (isNumericMode) {
 			const val = Number.parseFloat(customValue);
-			if (val >= min && val <= max) {
-				onChange(val);
-				setCustomValue("");
-				setIsCustomEditing(false);
-				setIsDrawerOpen(false);
+			if (!isNaN(val)) {
+				// Check if value is outside the range
+				if (val < min || val > max) {
+					// Show confirmation dialog
+					setPendingValue(val);
+					setShowConfirmDialog(true);
+				} else {
+					// Value is within range, accept it immediately
+					onChange(val);
+					setCustomValue("");
+					setIsCustomEditing(false);
+					setIsDrawerOpen(false);
+				}
 			}
 		} else {
 			// String mode - just accept any text input
@@ -46,8 +64,26 @@ export const HybridSelector = ({
 		}
 	};
 
+	const handleConfirmOutOfRange = () => {
+		if (pendingValue !== null) {
+			onChange(pendingValue);
+			setCustomValue("");
+			setIsCustomEditing(false);
+			setIsDrawerOpen(false);
+		}
+		setShowConfirmDialog(false);
+		setPendingValue(null);
+	};
+
+	const handleCancelOutOfRange = () => {
+		setShowConfirmDialog(false);
+		setPendingValue(null);
+	};
+
 	const handleCustomKeyDown = (e: React.KeyboardEvent) => {
 		if (e.key === "Enter") {
+			e.preventDefault();
+			e.stopPropagation();
 			handleCustomSubmit();
 		} else if (e.key === "Escape") {
 			setCustomValue("");
@@ -162,6 +198,44 @@ export const HybridSelector = ({
 					</Button>
 				)}
 			</div>
+
+			{/* Confirmation Dialog for Out of Range Values */}
+			<Dialog
+				open={showConfirmDialog}
+				onOpenChange={(open) => {
+					// Allow closing via X button
+					if (!open) {
+						handleCancelOutOfRange();
+					}
+				}}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Value Outside Range</DialogTitle>
+						<DialogDescription>
+							The value {pendingValue}
+							{unit} is outside the default range of {min}
+							{unit} - {max}
+							{unit}.
+							<br />
+							<br />
+							Are you sure you want to use this value?
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter className="flex-row gap-2">
+						<Button
+							variant="outline"
+							onClick={handleCancelOutOfRange}
+							className="flex-1"
+						>
+							Cancel
+						</Button>
+						<Button onClick={handleConfirmOutOfRange} className="flex-1">
+							Confirm
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 };

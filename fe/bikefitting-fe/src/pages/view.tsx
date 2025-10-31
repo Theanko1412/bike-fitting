@@ -523,9 +523,15 @@ export default function ViewPage() {
 							</div>
 							<div>
 								<label className="text-sm font-medium text-muted-foreground">
-									Cycling Experience
+									Cycling Experience Level
 								</label>
-								<p className="text-lg">{formData.cyclingExperience}</p>
+								<p className="text-lg">{formData.cyclingExperienceLevel}</p>
+							</div>
+							<div>
+								<label className="text-sm font-medium text-muted-foreground">
+									Cycling Experience Years
+								</label>
+								<p className="text-lg">{formData.cyclingExperienceYears}</p>
 							</div>
 							<div>
 								<label className="text-sm font-medium text-muted-foreground">
@@ -709,9 +715,46 @@ export default function ViewPage() {
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
 								<div>
 									<label className="font-medium text-muted-foreground">
+										Height
+									</label>
+									<p>{formData.height}cm</p>
+								</div>
+								<div>
+									<label className="font-medium text-muted-foreground">
+										Inseam
+									</label>
+									<p>{formData.inseam}cm</p>
+								</div>
+								<div>
+									<label className="font-medium text-muted-foreground">
+										Shoulder Width
+									</label>
+									<p>{formData.shoulderWidth}cm</p>
+								</div>
+								<div>
+									<label className="font-medium text-muted-foreground">
 										Ischial Tuberosity
 									</label>
 									<p>{formData.ischialTuberosity}mm</p>
+								</div>
+								{/* Foot Measurements */}
+								<div className="md:col-span-2">
+									<label className="font-medium text-muted-foreground">
+										Foot Length
+									</label>
+									<div className="flex gap-4 mt-1">
+										<span>Left: {formData.footLengthLeft}mm</span>
+										<span>Right: {formData.footLengthRight}mm</span>
+									</div>
+								</div>
+								<div className="md:col-span-2">
+									<label className="font-medium text-muted-foreground">
+										Foot Width
+									</label>
+									<div className="flex gap-4 mt-1">
+										<span>Left: {formData.footWidthLeft}mm</span>
+										<span>Right: {formData.footWidthRight}mm</span>
+									</div>
 								</div>
 								{/* Forefoot Angulation */}
 								<div className="md:col-span-2">
@@ -784,12 +827,33 @@ export default function ViewPage() {
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
 								<div>
 									<label className="font-medium text-muted-foreground">
-										Bike
+										Bike Brand
 									</label>
-									<p>
-										{formData.bikeBrand} {formData.bikeModel} (
-										{formData.bikeYear})
-									</p>
+									<p>{formData.bikeBrand}</p>
+								</div>
+								<div>
+									<label className="font-medium text-muted-foreground">
+										Bike Type
+									</label>
+									<p>{formData.bikeType}</p>
+								</div>
+								<div>
+									<label className="font-medium text-muted-foreground">
+										Bike Model
+									</label>
+									<p>{formData.bikeModel}</p>
+								</div>
+								<div>
+									<label className="font-medium text-muted-foreground">
+										Bike Size
+									</label>
+									<p>{formData.bikeSize}</p>
+								</div>
+								<div>
+									<label className="font-medium text-muted-foreground">
+										Bike Year
+									</label>
+									<p>{formData.bikeYear}</p>
 								</div>
 								<div>
 									<label className="font-medium text-muted-foreground">
@@ -824,9 +888,7 @@ export default function ViewPage() {
 									<label className="font-medium text-muted-foreground">
 										Saddle Offset
 									</label>
-									<p>
-										{formData.saddleOffset}mm {formData.saddleDirection}
-									</p>
+									<p>{formData.saddleOffset}mm</p>
 								</div>
 								<div>
 									<label className="font-medium text-muted-foreground">
@@ -850,6 +912,18 @@ export default function ViewPage() {
 								</div>
 								<div>
 									<label className="font-medium text-muted-foreground">
+										Reach to Grips
+									</label>
+									<p>{formData.reachToGrips}mm</p>
+								</div>
+								<div>
+									<label className="font-medium text-muted-foreground">
+										Reach to Hoods
+									</label>
+									<p>{formData.reachToHoods}mm</p>
+								</div>
+								<div>
+									<label className="font-medium text-muted-foreground">
 										Bar Drop from Saddle
 									</label>
 									<p>{formData.barDropFromSaddle}mm</p>
@@ -860,17 +934,15 @@ export default function ViewPage() {
 									</label>
 									<p>{formData.crankLength}mm</p>
 								</div>
-								{(formData.footbedLeft || formData.footbedRight) && (
-									<div>
-										<label className="font-medium text-muted-foreground">
-											Footbed
-										</label>
-										<div className="flex gap-4 mt-1">
-											<span>Left: {formData.footbedLeft || "None"}</span>
-											<span>Right: {formData.footbedRight || "None"}</span>
-										</div>
+								<div>
+									<label className="font-medium text-muted-foreground">
+										Footbed
+									</label>
+									<div className="flex gap-4 mt-1">
+										<span>Left: {formData.footbedLeft}</span>
+										<span>Right: {formData.footbedRight}</span>
 									</div>
-								)}
+								</div>
 							</div>
 						</div>
 
@@ -882,12 +954,33 @@ export default function ViewPage() {
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
 								<div>
 									<label className="font-medium text-muted-foreground">
-										Bike
+										Bike Brand
 									</label>
-									<p>
-										{formData.finalBikeBrand} {formData.finalBikeModel} (
-										{formData.finalBikeYear})
-									</p>
+									<p>{formData.finalBikeBrand}</p>
+								</div>
+								<div>
+									<label className="font-medium text-muted-foreground">
+										Bike Type
+									</label>
+									<p>{formData.finalBikeType}</p>
+								</div>
+								<div>
+									<label className="font-medium text-muted-foreground">
+										Bike Model
+									</label>
+									<p>{formData.finalBikeModel}</p>
+								</div>
+								<div>
+									<label className="font-medium text-muted-foreground">
+										Bike Size
+									</label>
+									<p>{formData.finalBikeSize}</p>
+								</div>
+								<div>
+									<label className="font-medium text-muted-foreground">
+										Bike Year
+									</label>
+									<p>{formData.finalBikeYear}</p>
 								</div>
 								<div>
 									<label className="font-medium text-muted-foreground">
@@ -929,8 +1022,7 @@ export default function ViewPage() {
 										Saddle Offset
 									</label>
 									<p>
-										{formData.finalSaddleOffset}mm{" "}
-										{formData.finalSaddleDirection}
+										{formData.finalSaddleOffset}mm
 										{getDifference(
 											formData.finalSaddleOffset,
 											formData.saddleOffset,
@@ -975,6 +1067,30 @@ export default function ViewPage() {
 								</div>
 								<div>
 									<label className="font-medium text-muted-foreground">
+										Reach to Grips
+									</label>
+									<p>
+										{formData.finalReachToGrips}mm
+										{getDifference(
+											formData.finalReachToGrips,
+											formData.reachToGrips,
+										)}
+									</p>
+								</div>
+								<div>
+									<label className="font-medium text-muted-foreground">
+										Reach to Hoods
+									</label>
+									<p>
+										{formData.finalReachToHoods}mm
+										{getDifference(
+											formData.finalReachToHoods,
+											formData.reachToHoods,
+										)}
+									</p>
+								</div>
+								<div>
+									<label className="font-medium text-muted-foreground">
 										Bar Drop from Saddle
 									</label>
 									<p>
@@ -997,17 +1113,15 @@ export default function ViewPage() {
 										)}
 									</p>
 								</div>
-								{(formData.finalFootbedLeft || formData.finalFootbedRight) && (
-									<div>
-										<label className="font-medium text-muted-foreground">
-											Footbed
-										</label>
-										<div className="flex gap-4 mt-1">
-											<span>Left: {formData.finalFootbedLeft || "None"}</span>
-											<span>Right: {formData.finalFootbedRight || "None"}</span>
-										</div>
+								<div>
+									<label className="font-medium text-muted-foreground">
+										Footbed
+									</label>
+									<div className="flex gap-4 mt-1">
+										<span>Left: {formData.finalFootbedLeft}</span>
+										<span>Right: {formData.finalFootbedRight}</span>
 									</div>
-								)}
+								</div>
 							</div>
 						</div>
 
@@ -1015,6 +1129,31 @@ export default function ViewPage() {
 						<div>
 							<h3 className="text-lg font-semibold mb-4">Shoe Setup</h3>
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+								{(formData.forefootWedgeLeft ||
+									formData.forefootWedgeRight) && (
+									<div className="md:col-span-2">
+										<label className="font-medium text-muted-foreground">
+											Forefoot Wedge
+										</label>
+										<div className="flex gap-4 mt-1">
+											<span>Left: {formData.forefootWedgeLeft || "None"}</span>
+											<span>
+												Right: {formData.forefootWedgeRight || "None"}
+											</span>
+										</div>
+									</div>
+								)}
+								{(formData.cleatWedgeLeft || formData.cleatWedgeRight) && (
+									<div className="md:col-span-2">
+										<label className="font-medium text-muted-foreground">
+											Cleat Wedge
+										</label>
+										<div className="flex gap-4 mt-1">
+											<span>Left: {formData.cleatWedgeLeft || "None"}</span>
+											<span>Right: {formData.cleatWedgeRight || "None"}</span>
+										</div>
+									</div>
+								)}
 								{(formData.cleatRotationLeft !== undefined ||
 									formData.cleatRotationRight !== undefined) && (
 									<div className="md:col-span-2">
@@ -1036,6 +1175,22 @@ export default function ViewPage() {
 										<div className="flex gap-4 mt-1">
 											<span>Left: {formData.cleatLateralLeft}mm</span>
 											<span>Right: {formData.cleatLateralRight}mm</span>
+										</div>
+									</div>
+								)}
+								{(formData.cleatForAftPlacementLeft ||
+									formData.cleatForAftPlacementRight) && (
+									<div className="md:col-span-2">
+										<label className="font-medium text-muted-foreground">
+											Cleat Fore/Aft Placement
+										</label>
+										<div className="flex gap-4 mt-1">
+											<span>
+												Left: {formData.cleatForAftPlacementLeft || "None"}
+											</span>
+											<span>
+												Right: {formData.cleatForAftPlacementRight || "None"}
+											</span>
 										</div>
 									</div>
 								)}

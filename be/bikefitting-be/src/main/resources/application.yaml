@@ -34,9 +34,10 @@ management:
 logging:
   level:
     curlin.danko.bikefitting: INFO
-    org.springframework.web: WARN
+    org.springframework.web: DEBUG
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    com.fasterxml.jackson: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
@@ -73,3 +74,12 @@ auth:
     allow-credentials: true
     exposed-headers:
       - "Content-Disposition"
+
+# Company Information (override with environment variables for deployment)
+company:
+  name: ${COMPANY_NAME:Your Company Name}
+  tagline: ${COMPANY_TAGLINE:Professional Bike Fitting Services}
+  address: ${COMPANY_ADDRESS:Your Address Here}
+  phone: ${COMPANY_PHONE:Your Phone Number}
+  email: ${COMPANY_EMAIL:your-email@domain.com}
+  website: ${COMPANY_WEBSITE:www.yourwebsite.com}

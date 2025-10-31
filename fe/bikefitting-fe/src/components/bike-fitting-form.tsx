@@ -152,7 +152,9 @@ export function BikeFittingForm() {
 			setFormData((prev) => ({
 				...prev,
 				finalBikeBrand: prev.bikeBrand,
+				finalBikeType: prev.bikeType,
 				finalBikeModel: prev.bikeModel,
+				finalBikeSize: prev.bikeSize,
 				finalBikeYear: prev.bikeYear,
 				finalSaddleBrand: prev.saddleBrand,
 				finalSaddleModel: prev.saddleModel,

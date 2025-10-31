@@ -1,5 +1,6 @@
 package curlin.danko.bikefitting.service
 
+import curlin.danko.bikefitting.config.CompanyConfig
 import curlin.danko.bikefitting.model.dto.InputForm
 import org.springframework.stereotype.Service
 import org.thymeleaf.TemplateEngine
@@ -12,6 +13,7 @@ import java.util.*
 @Service
 class PdfService(
     private val templateEngine: TemplateEngine,
+    private val companyConfig: CompanyConfig,
 ) {
 
     fun generateBikeFittingReport(inputForm: InputForm, recordId: String): ByteArray {
@@ -21,6 +23,7 @@ class PdfService(
             context.setVariable("form", inputForm)
             context.setVariable("recordId", recordId)
             context.setVariable("dateFormatted", formatDate(inputForm.date))
+            context.setVariable("company", companyConfig)
 
             // Extract and prepare images
             val images = extractImages(inputForm)

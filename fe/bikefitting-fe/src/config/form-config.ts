@@ -56,7 +56,7 @@ export const fitters: Fitter[] = (() => {
 	}
 })();
 
-export const cyclingExperience = [
+export const cyclingExperienceLevel = [
 	"Beginner",
 	"Intermediate",
 	"Experienced",
@@ -72,13 +72,20 @@ export const bikeYears = Array.from({ length: 11 }, (_, i) => currentYear - i);
 
 // Value ranges for drawer selections
 export const ranges = {
+	cyclingExperienceYears: Array.from({ length: 20 }, (_, i) => i * 2 + 1), // 1-40 years in 2 years steps
 	ischialTuberosity: Array.from({ length: 15 }, (_, i) => 80 + i * 5), // 80-150mm in 5mm steps
+	height: Array.from({ length: 13 }, (_, i) => 150 + i * 5), // 150-210cm in 5cm steps
+	inseam: Array.from({ length: 6 }, (_, i) => 65 + i * 5), // 65-95 in 5cm steps
+	shoulderWidth: Array.from({ length: 12 }, (_, i) => 35 + i * 5), // 35-90 in 5cm steps
+	footLength: Array.from({ length: 10 }, (_, i) => 220 + i * 10), // 220-320mm in 10mm steps
+	footWidth: Array.from({ length: 10 }, (_, i) => 80 + i * 10), // 80-180mm in 10mm steps
 	hamstringROM: Array.from({ length: 19 }, (_, i) => i * 5), // 0-90° in 5° steps
 	shoulderROM: Array.from({ length: 37 }, (_, i) => i * 5), // 0-180° in 5° steps
 	hipROM: Array.from({ length: 37 }, (_, i) => i * 5), // 0-180° in 5° steps
 	ankleROMPlantar: Array.from({ length: 15 }, (_, i) => -20 + i * 5), // -20 to +50° in 5° steps
 	ankleROMDorsal: Array.from({ length: 15 }, (_, i) => -20 + i * 5), // -20 to +50° in 5° steps
 	qAngle: Array.from({ length: 26 }, (_, i) => i), // 0-25° in 1° steps
+	legLengthDiscrepancyDifference: Array.from({ length: 17 }, (_, i) => i * 3), // 0-50mm in 3mm steps
 	activeHipROM: Array.from({ length: 37 }, (_, i) => i * 5), // 0-180° in 5° steps
 	saddleHeight: Array.from({ length: 51 }, (_, i) => 600 + i * 5), // 600-850mm in 5mm steps
 	saddleWidth: Array.from({ length: 9 }, (_, i) => 120 + i * 5), // 120-160mm in 5mm steps
@@ -95,6 +102,7 @@ export const ranges = {
 	cleatRotation: Array.from({ length: 21 }, (_, i) => -10 + i), // -10 to +10° in 1° steps
 	cleatLateral: Array.from({ length: 21 }, (_, i) => -10 + i), // -10 to +10mm in 1mm steps
 	cleatLift: Array.from({ length: 16 }, (_, i) => i), // 0-15mm in 1mm steps
+	footbed: Array.from({ length: 6 }, (_, i) => i), // 0-5 in 1 step
 };
 
 // String options for drawers (5+ options)
@@ -117,6 +125,14 @@ export const bikeBrands = [
 	"Pinarello",
 ].sort();
 
+export const bikeTypes = [
+	"Road",
+	"Gravel",
+	"Mountain",
+	"Hybrid",
+	"Electric",
+].sort();
+
 // Pedal brand options
 export const pedalBrands = [
 	"Shimano",
@@ -136,12 +152,20 @@ export const getDefaultFormData = () => ({
 	email: "",
 	phone: "",
 	fitter: fitters[0],
-	cyclingExperience: "Professional",
+	cyclingExperienceLevel: "Professional",
+	cyclingExperienceYears: 5,
 	cyclingFrequency: "9-10",
 	cyclingProblem: "",
 	cyclingConcerns: "",
 	// Step 1: Full Body Assessment (defaults to middle of ranges)
 	ischialTuberosity: 115, // middle of 80-150
+	height: 170, // middle of 150-210,
+	inseam: 80, // middle of 65-95,
+	shoulderWidth: 40, // middle of 35-90,
+	footLengthLeft: 260,
+	footLengthRight: 260,
+	footWidthLeft: 100,
+	footWidthRight: 100,
 	forefootAngulationTypeLeft: "Neutral",
 	forefootAngulationTypeRight: "Neutral",
 	forefootAngulationSeverityLeft: "",
@@ -158,20 +182,16 @@ export const getDefaultFormData = () => ({
 	advScapularPositionType: "",
 	advScapularPositionSeverity: "",
 	cervicalSpineROM: "",
-	shoulderROM: 90, // middle of 0-180
-	hamstringROMLeft: 45, // middle of 0-90
-	hamstringROMRight: 45,
-	hipROMLeft: 90, // middle of 0-180
-	hipROMRight: 90,
+	hamstringROMLeft: 60, // middle of 0-90
+	hamstringROMRight: 60,
+	hipROMLeft: 100, // middle of 0-180
+	hipROMRight: 100,
 	advPassiveHipROMLeft: "",
 	advPassiveHipROMRight: "",
-	ankleROMPlantar‌Left: 15, // middle of -20 to +50
-	ankleROMPlantar‌Right: 15,
-	ankleROMDorsalLeft: 15,
-	ankleROMDorsalRight: 15,
 	advQAngle: 12, // middle of 0-25
+	legLengthDiscrepancy: "none",
+	legLengthDiscrepancyDifference: 0,
 	pelvicRotation: "",
-	legLengthDiscrepancy: "",
 
 	// Thomas Test
 	itBandLeft: "",
@@ -198,6 +218,8 @@ export const getDefaultFormData = () => ({
 
 	// Step 2: Initial Bike Measurement
 	bikeBrand: "Trek",
+	bikeType: "Road",
+	bikeSize: "",
 	bikeModel: "",
 	bikeYear: currentYear,
 	saddleBrand: "",
@@ -207,23 +229,24 @@ export const getDefaultFormData = () => ({
 	shoeSize: 42, // middle of 35-50
 	saddleHeight: 725, // middle of 600-850
 	saddleOffset: 0, // middle of -50 to 50
-	saddleDirection: "",
 	handlebarWidth: 42, // middle of common sizes
 	stemLength: 95, // middle of 60-130
-	stemAngle: 6, // middle of -17 to 30
+	stemAngle: -7,
 	reachToHandlebar: 450, // middle of 350-550
 	reachToGrips: 550, // middle of 450-650
 	reachToHoods: 425, // middle of 350-500
 	barDropFromSaddle: -30, // middle of -60 to 0
 	pedalsBrand: "Shimano",
-	footbedLeft: "",
-	footbedRight: "",
+	footbedLeft: 0,
+	footbedRight: 0,
 	crankLength: 172.5, // common default
 	initialRiderPhoto: "", // Initial bike measurement rider photo
 
 	// Step 3: Final Bike Measurement
 	finalBikeBrand: "Trek",
+	finalBikeType: "Road",
 	finalBikeModel: "",
+	finalBikeSize: "",
 	finalBikeYear: currentYear,
 	finalSaddleBrand: "",
 	finalSaddleModel: "",
@@ -232,7 +255,6 @@ export const getDefaultFormData = () => ({
 	finalShoeSize: 42, // middle of 35-50
 	finalSaddleHeight: 725, // middle of 600-850
 	finalSaddleOffset: 0, // middle of -50 to 50
-	finalSaddleDirection: "",
 	finalHandlebarWidth: 42, // middle of common sizes
 	finalStemLength: 95, // middle of 60-130
 	finalStemAngle: 6, // middle of -17 to 30
@@ -241,8 +263,8 @@ export const getDefaultFormData = () => ({
 	finalReachToHoods: 425, // middle of 350-500
 	finalBarDropFromSaddle: -30, // middle of -60 to 0
 	finalPedalsBrand: "Shimano",
-	finalFootbedLeft: "",
-	finalFootbedRight: "",
+	finalFootbedLeft: 0,
+	finalFootbedRight: 0,
 	finalCrankLength: 172.5, // common default
 	finalRiderPhoto: "", // Final bike measurement rider photo
 
