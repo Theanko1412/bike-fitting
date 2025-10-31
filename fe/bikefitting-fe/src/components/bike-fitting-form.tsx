@@ -163,7 +163,6 @@ export function BikeFittingForm() {
 				finalShoeSize: prev.shoeSize,
 				finalSaddleHeight: prev.saddleHeight,
 				finalSaddleOffset: prev.saddleOffset,
-				finalSaddleDirection: prev.saddleDirection,
 				finalHandlebarWidth: prev.handlebarWidth,
 				finalStemLength: prev.stemLength,
 				finalStemAngle: prev.stemAngle,
