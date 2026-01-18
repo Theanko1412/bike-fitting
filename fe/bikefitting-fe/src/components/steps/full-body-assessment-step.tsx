@@ -1,6 +1,7 @@
 import { HybridSelector } from "@/components/ui/hybrid-selector";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NumberInput } from "@/components/ui/number-input";
 import { ToggleGroup } from "@/components/ui/toggle-group";
 import { forefootAngulationTypes, ranges } from "@/config/form-config";
 import { bikeFittingImageToBase64 } from "@/lib/utils";
@@ -24,20 +25,22 @@ export function FullBodyAssessmentStep({
 				unit="mm"
 			/>
 
-			<HybridSelector
+			<NumberInput
 				label="Height"
 				value={formData.height}
 				onChange={(value) => handleInputChange("height", value)}
-				options={ranges.height}
-				unit="cm"
+				unit="mm"
+				min={1500}
+				max={2200}
 			/>
 
-			<HybridSelector
+			<NumberInput
 				label="Inseam"
 				value={formData.inseam}
 				onChange={(value) => handleInputChange("inseam", value)}
-				options={ranges.inseam}
-				unit="cm"
+				unit="mm"
+				min={Math.min(...ranges.inseam)}
+				max={Math.max(...ranges.inseam)}
 			/>
 
 			<HybridSelector
@@ -50,7 +53,7 @@ export function FullBodyAssessmentStep({
 
 			<div className="space-y-2">
 				<Label className="text-base font-medium">Foot Length</Label>
-				<div className="grid grid-cols-2 gap-2">
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
 					<HybridSelector
 						label="Left"
 						value={formData.footLengthLeft}
@@ -70,7 +73,7 @@ export function FullBodyAssessmentStep({
 
 			<div className="space-y-2">
 				<Label className="text-base font-medium">Foot Width</Label>
-				<div className="grid grid-cols-2 gap-2">
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
 					<HybridSelector
 						label="Left"
 						value={formData.footWidthLeft}
@@ -92,7 +95,7 @@ export function FullBodyAssessmentStep({
 				<Label className="text-base font-medium">
 					Forefoot Angulation Type
 				</Label>
-				<div className="grid grid-cols-2 gap-4">
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 					<div>
 						<Label className="text-sm text-muted-foreground block">Left</Label>
 						<HybridSelector
@@ -391,7 +394,7 @@ export function FullBodyAssessmentStep({
 
 			<div className="space-y-2">
 				<Label className="text-base font-medium">Hamstring ROM</Label>
-				<div className="grid grid-cols-2 gap-2">
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
 					<HybridSelector
 						label="Left"
 						value={formData.hamstringROMLeft}
@@ -411,7 +414,7 @@ export function FullBodyAssessmentStep({
 
 			<div className="space-y-2">
 				<Label className="text-base font-medium">Hip ROM</Label>
-				<div className="grid grid-cols-2 gap-2">
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
 					<HybridSelector
 						label="Left"
 						value={formData.hipROMLeft}

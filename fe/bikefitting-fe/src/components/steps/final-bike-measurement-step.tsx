@@ -192,7 +192,7 @@ export function FinalBikeMeasurementStep({
 
 			<div className="space-y-2">
 				<Label className="text-base font-medium">Footbed</Label>
-				<div className="grid grid-cols-2 gap-4">
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 					<div>
 						<Label className="text-sm text-muted-foreground block">Left</Label>
 						<HybridSelector

@@ -74,8 +74,8 @@ export const bikeYears = Array.from({ length: 11 }, (_, i) => currentYear - i);
 export const ranges = {
 	cyclingExperienceYears: Array.from({ length: 20 }, (_, i) => i * 2 + 1), // 1-40 years in 2 years steps
 	ischialTuberosity: Array.from({ length: 15 }, (_, i) => 80 + i * 5), // 80-150mm in 5mm steps
-	height: Array.from({ length: 13 }, (_, i) => 150 + i * 5), // 150-210cm in 5cm steps
-	inseam: Array.from({ length: 6 }, (_, i) => 65 + i * 5), // 65-95 in 5cm steps
+	height: Array.from({ length: 13 }, (_, i) => 1500 + i * 50), // 1500-2100mm (150-210cm) in 50mm steps
+	inseam: Array.from({ length: 6 }, (_, i) => 650 + i * 50), // 650-950mm (65-95cm) in 50mm steps
 	shoulderWidth: Array.from({ length: 12 }, (_, i) => 35 + i * 5), // 35-90 in 5cm steps
 	footLength: Array.from({ length: 10 }, (_, i) => 220 + i * 10), // 220-320mm in 10mm steps
 	footWidth: Array.from({ length: 10 }, (_, i) => 80 + i * 10), // 80-180mm in 10mm steps
@@ -89,7 +89,7 @@ export const ranges = {
 	activeHipROM: Array.from({ length: 37 }, (_, i) => i * 5), // 0-180° in 5° steps
 	saddleHeight: Array.from({ length: 51 }, (_, i) => 600 + i * 5), // 600-850mm in 5mm steps
 	saddleWidth: Array.from({ length: 9 }, (_, i) => 120 + i * 5), // 120-160mm in 5mm steps
-	saddleOffset: Array.from({ length: 21 }, (_, i) => -50 + i * 5), // -50 to 50mm in 5mm steps
+	saddleOffset: Array.from({ length: 11 }, (_, i) => -25 + i * 5), // -25 to 25mm in 5mm steps
 	shoeSize: Array.from({ length: 16 }, (_, i) => 35 + i), // 35-50 in 1 size steps
 	stemLength: Array.from({ length: 15 }, (_, i) => 60 + i * 5), // 60-130mm in 5mm steps
 	stemAngle: Array.from({ length: 25 }, (_, i) => -17 + i * 2), // -17 to +30° in 2° steps
@@ -159,8 +159,8 @@ export const getDefaultFormData = () => ({
 	cyclingConcerns: "",
 	// Step 1: Full Body Assessment (defaults to middle of ranges)
 	ischialTuberosity: 115, // middle of 80-150
-	height: 170, // middle of 150-210,
-	inseam: 80, // middle of 65-95,
+	height: 1700, // middle of 1500-2100,
+	inseam: 800, // middle of 650-950,
 	shoulderWidth: 40, // middle of 35-90,
 	footLengthLeft: 260,
 	footLengthRight: 260,

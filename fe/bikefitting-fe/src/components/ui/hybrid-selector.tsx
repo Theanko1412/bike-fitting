@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Button } from "./button";
 import {
 	Dialog,
@@ -32,9 +32,18 @@ export const HybridSelector = ({
 	const [pendingValue, setPendingValue] = useState<number | null>(null);
 
 	const isNumericMode = typeof value === "number";
-	const numericOptions = isNumericMode ? (options as number[]) : [];
-	const min = isNumericMode ? Math.min(...numericOptions) : 0;
-	const max = isNumericMode ? Math.max(...numericOptions) : 0;
+	
+	// Memoize min/max calculations to avoid recalculating on every render
+	const { min, max } = useMemo(() => {
+		if (!isNumericMode || options.length === 0) {
+			return { min: 0, max: 0 };
+		}
+		const numericOptions = options as number[];
+		return {
+			min: Math.min(...numericOptions),
+			max: Math.max(...numericOptions),
+		};
+	}, [isNumericMode, options]);
 
 	const handleCustomSubmit = () => {
 		if (isNumericMode) {
@@ -91,6 +100,19 @@ export const HybridSelector = ({
 		}
 	};
 
+	// Memoize increment/decrement handlers to avoid creating new functions on every render
+	const handleDecrement = useCallback(() => {
+		if (isNumericMode) {
+			onChange(Math.max(min, (value as number) - 1));
+		}
+	}, [isNumericMode, min, value, onChange]);
+
+	const handleIncrement = useCallback(() => {
+		if (isNumericMode) {
+			onChange(Math.min(max, (value as number) + 1));
+		}
+	}, [isNumericMode, max, value, onChange]);
+
 	return (
 		<div className="space-y-2">
 			<div className="flex items-center gap-1">
@@ -101,7 +123,7 @@ export const HybridSelector = ({
 					<Button
 						variant="outline"
 						size="icon"
-						onClick={() => onChange(Math.max(min, (value as number) - 1))}
+						onClick={handleDecrement}
 						disabled={(value as number) <= min}
 						className="h-12 w-12 flex-shrink-0"
 					>
@@ -190,7 +212,7 @@ export const HybridSelector = ({
 					<Button
 						variant="outline"
 						size="icon"
-						onClick={() => onChange(Math.min(max, (value as number) + 1))}
+						onClick={handleIncrement}
 						disabled={(value as number) >= max}
 						className="h-12 w-12 flex-shrink-0"
 					>

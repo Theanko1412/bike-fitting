@@ -84,7 +84,7 @@ export function ShoeSetupStep({
 
 			<div className="space-y-2">
 				<Label className="text-base font-medium">Cleat Rotation</Label>
-				<div className="grid grid-cols-2 gap-4">
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 					<HybridSelector
 						label="Left"
 						value={formData.cleatRotationLeft}
@@ -104,7 +104,7 @@ export function ShoeSetupStep({
 
 			<div className="space-y-2">
 				<Label className="text-base font-medium">Cleat Lateral Placement</Label>
-				<div className="grid grid-cols-2 gap-4">
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 					<HybridSelector
 						label="Left"
 						value={formData.cleatLateralLeft}
@@ -160,7 +160,7 @@ export function ShoeSetupStep({
 
 			<div className="space-y-2">
 				<Label className="text-base font-medium">Cleat Lift</Label>
-				<div className="grid grid-cols-2 gap-4">
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 					<HybridSelector
 						label="Left"
 						value={formData.cleatLiftLeft}
