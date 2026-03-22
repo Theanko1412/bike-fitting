@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -17,8 +18,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { getDefaultFormData, steps } from "@/config/form-config";
 import {
-	FORM_VERSION,
-	STORAGE_KEY,
+	persistFormToStorage,
 	useFormPersistence,
 } from "@/hooks/useFormPersistence";
 import { useVisibilityChange } from "@/hooks/useVisibilityChange";
@@ -51,6 +51,7 @@ export function BikeFittingForm() {
 	const [failureError, setFailureError] = useState("");
 	const [failedFormData, setFailedFormData] = useState<any>(null);
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
 
 	const {
 		saveFormData,
@@ -130,17 +131,7 @@ export function BikeFittingForm() {
 	// Save data when user leaves the app (switch tabs, close browser, etc.)
 	useVisibilityChange(() => {
 		if (!showRestorePrompt && isFormDataModified(formData)) {
-			// Force immediate save when leaving the app
-			try {
-				const storageData = {
-					data: formData,
-					timestamp: Date.now(),
-					version: FORM_VERSION,
-				};
-				localStorage.setItem(STORAGE_KEY, JSON.stringify(storageData));
-			} catch (error) {
-				console.warn("Failed to save form data on visibility change:", error);
-			}
+			persistFormToStorage(formData);
 		}
 	});
 
@@ -192,14 +183,8 @@ export function BikeFittingForm() {
 	const handleHomeNavigation = () => {
 		// Check if user has made any changes to the form
 		if (isFormDataModified(formData)) {
-			// Force immediate save before navigating home (same as visibility change logic)
 			try {
-				const storageData = {
-					data: formData,
-					timestamp: Date.now(),
-					version: FORM_VERSION,
-				};
-				localStorage.setItem(STORAGE_KEY, JSON.stringify(storageData));
+				persistFormToStorage(formData);
 
 				toast.info("Form progress saved", {
 					description:
@@ -250,6 +235,8 @@ export function BikeFittingForm() {
 			toast.success("Form submitted successfully!", {
 				duration: 5000,
 			});
+
+			await queryClient.invalidateQueries({ queryKey: ["bikeFittingRecords"] });
 
 			// Clear stored data after successful submission
 			clearFormData();
@@ -320,7 +307,7 @@ export function BikeFittingForm() {
 								{steps[currentStep].title}
 							</CardTitle>
 							<CardDescription>
-								Step {currentStep} of {steps.length - 1}
+								Step {currentStep + 1} of {steps.length}
 							</CardDescription>
 							<Progress value={progress} className="w-full" />
 						</CardHeader>
@@ -422,7 +409,7 @@ export function BikeFittingForm() {
 							{steps[currentStep].title}
 						</h1>
 						<p className="text-muted-foreground text-sm">
-							Step {currentStep} of {steps.length - 1}
+							Step {currentStep + 1} of {steps.length}
 						</p>
 					</div>
 				</div>

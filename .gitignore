@@ -19,6 +19,9 @@ count.txt
 /fe/bikefitting-fe/.nitro
 /fe/bikefitting-fe/.tanstack
 /fe/bikefitting-fe/.vscode
+/fe/.agents
+/fe/.cursor
+/fe/skills-lock.json
 /junk
 
 .idea

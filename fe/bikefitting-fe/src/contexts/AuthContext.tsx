@@ -1,5 +1,7 @@
+import { useQueryClient } from "@tanstack/react-query";
 import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
+import { SESSION_EXPIRED_EVENT } from "../services/authFetch";
 import { AuthService, type AuthUser } from "../services/authService";
 
 interface AuthContextType {
@@ -13,6 +15,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+	const queryClient = useQueryClient();
 	const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 	const [user, setUser] = useState<AuthUser | null>(null);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -42,6 +45,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		checkAuth();
 	}, []);
 
+	useEffect(() => {
+		const onSessionExpired = () => {
+			setIsAuthenticated(false);
+			setUser(null);
+			queryClient.clear();
+		};
+		window.addEventListener(SESSION_EXPIRED_EVENT, onSessionExpired);
+		return () =>
+			window.removeEventListener(SESSION_EXPIRED_EVENT, onSessionExpired);
+	}, [queryClient]);
+
 	const login = async (username: string, password: string): Promise<void> => {
 		try {
 			const authResponse = await AuthService.login({ username, password });
@@ -59,6 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 	const logout = (): void => {
 		AuthService.logout();
+		queryClient.clear();
 		setIsAuthenticated(false);
 		setUser(null);
 	};

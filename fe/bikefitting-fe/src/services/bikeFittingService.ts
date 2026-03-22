@@ -1,10 +1,13 @@
 import { API_CONFIG, buildApiUrl } from "../config/api";
+import { normalizeCalendarDateString } from "../lib/utils";
+import { authFetch } from "./authFetch";
 import { AuthService } from "./authService";
 
 // Types
 export interface BikeFittingRecord {
 	id: string;
 	fullName: string;
+	/** ISO-8601 instant from API (session date + time); use formatDate() for display */
 	date: string;
 	hasFile: boolean;
 }
@@ -14,8 +17,11 @@ export interface BikeFittingDAO {
 	fullName: string;
 	fitterFullName: string;
 	date: string;
+	/** Calendar date when the row was first stored (YYYY-MM-DD from API). */
+	submissionDate?: string;
 	jsonForm: any;
-	pdfFile: string | null;
+	/** True when a PDF exists; load bytes via GET …/records/:id/pdf */
+	hasFile: boolean;
 }
 
 export interface PagedResponse<T> {
@@ -24,10 +30,34 @@ export interface PagedResponse<T> {
 	hasMore: boolean;
 }
 
+export interface BikeFittingExportSummary {
+	id: string;
+	requestedByUsername: string | null;
+	filterFrom: string;
+	filterTo: string;
+	filterFitters: string[];
+	startedAt: string;
+	completedAt: string | null;
+	status: string;
+	rowCount: number | null;
+	errorMessage: string | null;
+	suggestedFilename: string | null;
+}
+
+export interface ExportCsvRequestBody {
+	from: string;
+	to: string;
+	/** Omit or empty = all fitters */
+	fitterNames?: string[];
+}
+
+export type RecordsSortDirection = "asc" | "desc";
+
 export interface SearchParams {
 	page: number;
 	size: number;
 	search?: string;
+	direction?: RecordsSortDirection;
 }
 
 export interface BackendErrorResponse {
@@ -70,10 +100,12 @@ export class BikeFittingService {
 		page = 0,
 		size = API_CONFIG.defaultPageSize,
 		search = "",
+		direction = "desc",
 	}: Partial<SearchParams> = {}): Promise<PagedResponse<BikeFittingRecord>> {
 		const params: Record<string, string> = {
 			page: page.toString(),
 			size: size.toString(),
+			direction,
 		};
 
 		if (search) {
@@ -83,7 +115,7 @@ export class BikeFittingService {
 		const url = buildApiUrl(API_CONFIG.endpoints.records, params);
 
 		try {
-			const response = await fetch(url, {
+			const response = await authFetch(url, {
 				headers: getAuthHeaders(),
 			});
 
@@ -100,11 +132,11 @@ export class BikeFittingService {
 				data: data.data.map((record: any) => ({
 					...record,
 					id: record.id, // Keep as string
-					date: new Date(record.date).toISOString().split("T")[0], // Convert LocalDate to string
+					date: String(record.date),
 					hasFile:
 						record.hasFile !== undefined
 							? record.hasFile
-							: record.pdfFile != null, // Use existing hasFile or derive from pdfFile
+							: Boolean(record.pdfFile),
 				})),
 			};
 
@@ -122,7 +154,7 @@ export class BikeFittingService {
 		const url = buildApiUrl(`${API_CONFIG.endpoints.records}/${id}`);
 
 		try {
-			const response = await fetch(url, {
+			const response = await authFetch(url, {
 				headers: getAuthHeaders(),
 			});
 
@@ -133,10 +165,10 @@ export class BikeFittingService {
 
 			const data = await response.json();
 
-			// Transform LocalDate to string
 			return {
 				...data,
-				date: new Date(data.date).toISOString().split("T")[0],
+				date: String(data.date),
+				hasFile: Boolean(data.hasFile),
 			};
 		} catch (error) {
 			console.error("Failed to fetch record:", error);
@@ -151,7 +183,7 @@ export class BikeFittingService {
 		const url = buildApiUrl(API_CONFIG.endpoints.form);
 
 		try {
-			const response = await fetch(url, {
+			const response = await authFetch(url, {
 				method: "POST",
 				headers: getAuthHeaders(),
 				body: JSON.stringify(formData),
@@ -173,8 +205,8 @@ export class BikeFittingService {
 
 			return {
 				...data,
-				date: new Date(data.date).toISOString().split("T")[0],
-				hasFile: data.pdfFile != null,
+				date: String(data.date),
+				hasFile: Boolean(data.hasFile),
 			};
 		} catch (error) {
 			console.error("Failed to submit form:", error);
@@ -192,7 +224,7 @@ export class BikeFittingService {
 		const url = buildApiUrl(`${API_CONFIG.endpoints.records}/${id}/pdf`);
 
 		try {
-			const response = await fetch(url, {
+			const response = await authFetch(url, {
 				headers: getAuthHeaders(),
 			});
 
@@ -245,7 +277,7 @@ export class BikeFittingService {
 		const url = buildApiUrl(`${API_CONFIG.endpoints.records}/${id}/pdf`);
 
 		try {
-			const response = await fetch(url, {
+			const response = await authFetch(url, {
 				headers: getAuthHeaders(),
 			});
 
@@ -261,7 +293,7 @@ export class BikeFittingService {
 			let fallbackFilename = "bike-fitting-report.pdf";
 			if (record) {
 				const cleanFullName = record.fullName.replace(/ /g, ""); // Remove all spaces like backend
-				const dateString = record.date; // Already in yyyy-mm-dd format
+				const dateString = normalizeCalendarDateString(record.date);
 				fallbackFilename = `${cleanFullName}-${dateString}-bike-fitting-report.pdf`;
 			}
 
@@ -303,6 +335,156 @@ export class BikeFittingService {
 			window.URL.revokeObjectURL(downloadUrl);
 		} catch (error) {
 			console.error("Failed to download PDF:", error);
+			throw error;
+		}
+	}
+
+	/**
+	 * ADMIN: distinct fitter names for export filters
+	 */
+	static async getFitters(): Promise<string[]> {
+		const url = buildApiUrl(API_CONFIG.endpoints.fitters);
+		const response = await authFetch(url, { headers: getAuthHeaders() });
+		if (!response.ok) {
+			const errorMessage = await parseErrorResponse(response);
+			throw new Error(errorMessage);
+		}
+		return response.json();
+	}
+
+	/**
+	 * ADMIN: paginated export job history
+	 */
+	static async listExports({
+		page = 0,
+		size = 20,
+	}: {
+		page?: number;
+		size?: number;
+	} = {}): Promise<PagedResponse<BikeFittingExportSummary>> {
+		const url = buildApiUrl(API_CONFIG.endpoints.exports, {
+			page: String(page),
+			size: String(size),
+		});
+		const response = await authFetch(url, { headers: getAuthHeaders() });
+		if (!response.ok) {
+			const errorMessage = await parseErrorResponse(response);
+			throw new Error(errorMessage);
+		}
+		return response.json();
+	}
+
+	/**
+	 * ADMIN: POST mass CSV export and trigger a browser download (UTF-8 BOM + CRLF from server).
+	 */
+	static async downloadExportCsv(
+		body: ExportCsvRequestBody,
+	): Promise<{ exportId: string | null }> {
+		const url = buildApiUrl(API_CONFIG.endpoints.exports);
+		const payload: ExportCsvRequestBody = {
+			from: body.from,
+			to: body.to,
+			...(body.fitterNames !== undefined && body.fitterNames.length > 0
+				? { fitterNames: body.fitterNames }
+				: {}),
+		};
+
+		const response = await authFetch(url, {
+			method: "POST",
+			headers: getAuthHeaders(),
+			body: JSON.stringify(payload),
+		});
+
+		if (!response.ok) {
+			const errorMessage = await parseErrorResponse(response);
+			throw new Error(errorMessage);
+		}
+
+		const exportId = response.headers.get("X-Export-Id");
+		const contentDisposition = response.headers.get("Content-Disposition");
+		let filename = `bikefitting-export-${body.from}_to_${body.to}.csv`;
+
+		if (contentDisposition) {
+			let filenameMatch = contentDisposition.match(
+				/filename\*?=['"]?([^'";]+)['"]?/i,
+			);
+			if (!filenameMatch) {
+				filenameMatch = contentDisposition.match(
+					/filename=['"]?([^'";]+)['"]?/i,
+				);
+			}
+			if (!filenameMatch) {
+				filenameMatch = contentDisposition.match(/filename=([^;,\s]+)/i);
+			}
+			if (filenameMatch) {
+				filename = filenameMatch[1].trim();
+			}
+		}
+
+		const buf = await response.arrayBuffer();
+		const blob = new Blob([buf], { type: "text/csv;charset=utf-8" });
+		const downloadUrl = window.URL.createObjectURL(blob);
+		const link = document.createElement("a");
+		link.href = downloadUrl;
+		link.download = filename;
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+		window.URL.revokeObjectURL(downloadUrl);
+
+		return { exportId };
+	}
+
+	/**
+	 * Download a single record as CSV (same columns as mass export: meta + form + json_form_error).
+	 */
+	static async downloadRecordCsv(id: string): Promise<void> {
+		const url = buildApiUrl(`${API_CONFIG.endpoints.records}/${id}/csv`);
+
+		try {
+			const response = await authFetch(url, {
+				headers: getAuthHeaders(),
+			});
+
+			if (!response.ok) {
+				if (response.status === 404) {
+					throw new Error("Record not found");
+				}
+				const errorMessage = await parseErrorResponse(response);
+				throw new Error(errorMessage);
+			}
+
+			const contentDisposition = response.headers.get("Content-Disposition");
+			let filename = `bike-fitting-${id}.csv`;
+
+			if (contentDisposition) {
+				let filenameMatch = contentDisposition.match(
+					/filename\*?=['"]?([^'";]+)['"]?/i,
+				);
+				if (!filenameMatch) {
+					filenameMatch = contentDisposition.match(
+						/filename=['"]?([^'";]+)['"]?/i,
+					);
+				}
+				if (!filenameMatch) {
+					filenameMatch = contentDisposition.match(/filename=([^;,\s]+)/i);
+				}
+				if (filenameMatch) {
+					filename = filenameMatch[1].trim();
+				}
+			}
+
+			const blob = await response.blob();
+			const downloadUrl = window.URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = downloadUrl;
+			link.download = filename;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			window.URL.revokeObjectURL(downloadUrl);
+		} catch (error) {
+			console.error("Failed to download record CSV:", error);
 			throw error;
 		}
 	}

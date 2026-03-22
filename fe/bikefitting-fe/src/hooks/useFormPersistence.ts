@@ -27,6 +27,21 @@ function excludeFields(formData: any): any {
 	return filtered;
 }
 
+/** Immediate save using the same rules as debounced autosave (excludes photos & fitter). */
+export function persistFormToStorage(formData: any): void {
+	try {
+		const filteredData = excludeFields(formData);
+		const storageData: StoredFormData = {
+			data: filteredData,
+			timestamp: Date.now(),
+			version: FORM_VERSION,
+		};
+		localStorage.setItem(STORAGE_KEY, JSON.stringify(storageData));
+	} catch (error) {
+		console.warn("Failed to save form data to localStorage:", error);
+	}
+}
+
 // Reset excluded fields when restoring (images to empty strings, fitter to default)
 function resetExcludedFields(formData: any): any {
 	const restored = { ...formData };
@@ -45,17 +60,7 @@ export function useFormPersistence() {
 
 	// Save form data to localStorage with timestamp (excluding images and fitter)
 	const saveFormData = useCallback((formData: any) => {
-		try {
-			const filteredData = excludeFields(formData);
-			const storageData: StoredFormData = {
-				data: filteredData,
-				timestamp: Date.now(),
-				version: FORM_VERSION,
-			};
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(storageData));
-		} catch (error) {
-			console.warn("Failed to save form data to localStorage:", error);
-		}
+		persistFormToStorage(formData);
 	}, []);
 
 	// Debounced save to avoid excessive localStorage writes

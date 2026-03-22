@@ -1,35 +1,36 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import {
-	ArrowLeft,
-	Calendar,
-	Download,
-	FileText,
-	RefreshCw,
-	User,
-} from "lucide-react";
+import { Calendar, Download, FileText, RefreshCw, User } from "lucide-react";
 import React, { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { PageHeader } from "../components/page-header";
 import { Button } from "../components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "../components/ui/card";
+import { Card, CardContent } from "../components/ui/card";
 import { Input } from "../components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "../components/ui/select";
 import { formatDate } from "../lib/utils";
 import {
 	type BikeFittingRecord,
+	type RecordsSortDirection,
 	BikeFittingService,
 } from "../services/bikeFittingService";
 
 const ITEMS_PER_PAGE = 50;
 
+const searchFetchErrorToastShown = new Set<string>();
+
 export default function SearchPage() {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+	const [sortDirection, setSortDirection] =
+		useState<RecordsSortDirection>("desc");
 
 	// Debounce search term
 	React.useEffect(() => {
@@ -40,8 +41,13 @@ export default function SearchPage() {
 		return () => clearTimeout(timer);
 	}, [searchTerm]);
 
+	React.useEffect(() => {
+		searchFetchErrorToastShown.clear();
+	}, [debouncedSearchTerm, sortDirection]);
+
 	const {
 		data,
+		error,
 		fetchNextPage,
 		hasNextPage,
 		isFetchingNextPage,
@@ -50,25 +56,14 @@ export default function SearchPage() {
 		refetch,
 		isRefetching,
 	} = useInfiniteQuery({
-		queryKey: ["bikeFittingRecords", debouncedSearchTerm],
+		queryKey: ["bikeFittingRecords", debouncedSearchTerm, sortDirection],
 		queryFn: async ({ pageParam }) => {
-			try {
-				return await BikeFittingService.searchRecords({
-					page: pageParam,
-					size: ITEMS_PER_PAGE,
-					search: debouncedSearchTerm,
-				});
-			} catch (error) {
-				// Only show error toast for API failures
-				toast.error("Failed to fetch records", {
-					description:
-						error instanceof Error
-							? error.message
-							: "An unexpected error occurred",
-					duration: 5000,
-				});
-				throw error;
-			}
+			return await BikeFittingService.searchRecords({
+				page: pageParam,
+				size: ITEMS_PER_PAGE,
+				search: debouncedSearchTerm,
+				direction: sortDirection,
+			});
 		},
 		getNextPageParam: (lastPage) => {
 			return lastPage.hasMore ? lastPage.nextPage : undefined;
@@ -77,6 +72,26 @@ export default function SearchPage() {
 		staleTime: 30 * 1000,
 		gcTime: 10 * 60 * 1000, // 10 minutes
 	});
+
+	React.useEffect(() => {
+		if (!isError) {
+			searchFetchErrorToastShown.clear();
+		}
+	}, [isError]);
+
+	React.useEffect(() => {
+		if (!isError || !error) return;
+		const key = `${debouncedSearchTerm}:${sortDirection}:${error instanceof Error ? error.message : String(error)}`;
+		if (searchFetchErrorToastShown.has(key)) return;
+		searchFetchErrorToastShown.add(key);
+		toast.error("Failed to fetch records", {
+			description:
+				error instanceof Error
+					? error.message
+					: "An unexpected error occurred",
+			duration: 5000,
+		});
+	}, [isError, error, debouncedSearchTerm, sortDirection]);
 
 	const allRecords = useMemo(() => {
 		return data?.pages.flatMap((page) => page.data) ?? [];
@@ -194,26 +209,35 @@ export default function SearchPage() {
 
 	return (
 		<div className="min-h-screen bg-background text-foreground p-4">
-			<div className="max-w-4xl mx-auto">
+			<div className="max-w-4xl mx-auto space-y-6">
+				<PageHeader backTo="/" title="Search Bike Fittings" />
 				<Card>
-					<CardHeader>
-						<CardTitle className="flex items-center gap-2">
-							<Button variant="outline" asChild>
-								<Link to="/">
-									<ArrowLeft className="h-4 w-4" />
-								</Link>
-							</Button>
-							<h1 className="text-3xl font-bold">Search Bike Fittings</h1>
-						</CardTitle>
-					</CardHeader>
 					<CardContent className="space-y-4">
-						<div className="flex gap-2">
+						<div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
 							<Input
 								placeholder="Search by name..."
 								value={searchTerm}
 								onChange={(e) => setSearchTerm(e.target.value)}
-								className="flex-1"
+								className="min-w-0 flex-1 sm:min-w-[12rem]"
+								aria-label="Search by name"
 							/>
+							<Select
+								value={sortDirection}
+								onValueChange={(v) =>
+									setSortDirection(v as RecordsSortDirection)
+								}
+							>
+								<SelectTrigger
+									className="h-9 w-full shrink-0 sm:w-[180px] text-base md:text-sm"
+									aria-label="Sort by date"
+								>
+									<SelectValue placeholder="Date order" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="desc">Newest first</SelectItem>
+									<SelectItem value="asc">Oldest first</SelectItem>
+								</SelectContent>
+							</Select>
 						</div>
 
 						{isError && (

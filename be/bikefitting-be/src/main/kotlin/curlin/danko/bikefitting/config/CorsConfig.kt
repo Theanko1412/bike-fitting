@@ -14,7 +14,7 @@ data class CorsConfig(
     var allowedMethods: List<String> = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS"),
     var allowedHeaders: String = "*",
     var allowCredentials: Boolean = true,
-    var exposedHeaders: List<String> = listOf("Content-Disposition"),
+    var exposedHeaders: List<String> = listOf("Content-Disposition", "X-Export-Id"),
 ) {
 
     @Bean

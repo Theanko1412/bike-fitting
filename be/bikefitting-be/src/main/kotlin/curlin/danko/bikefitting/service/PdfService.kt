@@ -22,7 +22,10 @@ class PdfService(
             val context = Context(Locale.ENGLISH)
             context.setVariable("form", inputForm)
             context.setVariable("recordId", recordId)
-            context.setVariable("dateFormatted", formatDate(inputForm.date))
+            context.setVariable(
+                "dateFormatted",
+                inputForm.date?.let { formatDate(it) } ?: "",
+            )
             context.setVariable("company", companyConfig)
 
             // Extract and prepare images
@@ -30,7 +33,7 @@ class PdfService(
             context.setVariable("images", images)
 
             // Process the template
-            val htmlContent = templateEngine.process("bike-fitting-report", context)
+            val htmlContent = templateEngine.process("claude-template", context)
 
             // Convert HTML to PDF
             return convertHtmlToPdf(htmlContent)
@@ -43,16 +46,14 @@ class PdfService(
         val images = mutableMapOf<String, String>()
 
         // Extract base64 images and ensure they have proper data URI format
-        if (inputForm.initialRiderPhoto.isNotBlank()) {
-            images["initialRiderPhoto"] = formatBase64Image(inputForm.initialRiderPhoto)
+        inputForm.initialRiderPhoto?.takeIf { it.isNotBlank() }?.let {
+            images["initialRiderPhoto"] = formatBase64Image(it)
         }
-
-        if (inputForm.finalRiderPhoto.isNotBlank()) {
-            images["finalRiderPhoto"] = formatBase64Image(inputForm.finalRiderPhoto)
+        inputForm.finalRiderPhoto?.takeIf { it.isNotBlank() }?.let {
+            images["finalRiderPhoto"] = formatBase64Image(it)
         }
-
-        if (inputForm.forwardSpinalFlexionPhoto.isNotBlank()) {
-            images["forwardSpinalFlexionPhoto"] = formatBase64Image(inputForm.forwardSpinalFlexionPhoto)
+        inputForm.forwardSpinalFlexionPhoto?.takeIf { it.isNotBlank() }?.let {
+            images["forwardSpinalFlexionPhoto"] = formatBase64Image(it)
         }
 
         return images

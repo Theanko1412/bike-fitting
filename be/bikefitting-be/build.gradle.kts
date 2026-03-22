@@ -37,6 +37,9 @@ dependencies {
 	
     // Nanoid for user-facing IDs
     implementation("com.aventrix.jnanoid:jnanoid:2.0.0")
+
+    // CSV export (Excel-friendly RFC / Excel format)
+    implementation("org.apache.commons:commons-csv:1.11.0")
 	
     // JWT dependencies
     implementation("io.jsonwebtoken:jjwt-api:0.11.5")

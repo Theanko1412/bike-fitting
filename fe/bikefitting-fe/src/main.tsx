@@ -12,11 +12,13 @@ import ReactDOM from "react-dom/client";
 
 import "./styles.css";
 import App from "./App.tsx";
+import { AdminRoute } from "./components/auth/AdminRoute";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { ThemeProvider } from "./components/theme-provider";
 import { Toaster } from "./components/ui/sonner";
 import { AuthProvider } from "./contexts/AuthContext";
 import FormPage from "./pages/form";
+import ExportPage from "./pages/export";
 import SearchPage from "./pages/search";
 import ViewPage from "./pages/view";
 import { handleInstallPrompt, registerSW } from "./utils/pwa";
@@ -58,6 +60,18 @@ const searchRoute = createRoute({
 	),
 });
 
+const exportRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/export",
+	component: () => (
+		<ProtectedRoute>
+			<AdminRoute>
+				<ExportPage />
+			</AdminRoute>
+		</ProtectedRoute>
+	),
+});
+
 const formRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/form",
@@ -81,6 +95,7 @@ const viewRoute = createRoute({
 const routeTree = rootRoute.addChildren([
 	indexRoute,
 	searchRoute,
+	exportRoute,
 	formRoute,
 	viewRoute,
 ]);

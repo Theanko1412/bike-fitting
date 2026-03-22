@@ -12,7 +12,10 @@ import org.slf4j.LoggerFactory
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.web.server.ResponseStatusException
+import java.time.ZoneId
 
 @Service
 class BikeFittingService(
@@ -26,35 +29,41 @@ class BikeFittingService(
         page: Int,
         size: Int,
         search: String?,
+        direction: String = "desc",
     ): PagedResponse<BikeFittingRecord> {
-        // Create pageable with DESC sort by date (latest first)
-        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date"))
+        val pageable = PageRequest.of(page, size, sortRecordsByDate(direction))
 
-        // Fetch data based on search term
+        // Projection queries: do not load json_form / full LOBs (legacy JSON can break hydration)
         val records = if (search.isNullOrBlank()) {
-            bikeFittingRepository.findAll(pageable)
+            bikeFittingRepository.findAllRecordsPage(pageable)
         } else {
-            bikeFittingRepository.findByFullNameContainingIgnoreCase(search, pageable)
-        }
-
-        // Convert to DTOs
-        val recordDtos = records.content.map { entity ->
-            entity.toRecord()
+            bikeFittingRepository.searchRecordsPage(search, pageable)
         }
 
         return PagedResponse(
-            data = recordDtos,
+            data = records.content,
             nextPage = if (records.hasNext()) page + 1 else null,
             hasMore = records.hasNext(),
         )
     }
 
+    private fun sortRecordsByDate(direction: String): Sort {
+        val dir = when (direction.lowercase()) {
+            "asc" -> Sort.Direction.ASC
+            else -> Sort.Direction.DESC
+        }
+        return Sort.by(dir, "date").and(Sort.by(Sort.Direction.ASC, "id"))
+    }
+
     fun getRecordById(id: String): BikeFittingDAO {
         return bikeFittingRepository.findById(id)
-            .orElseThrow { RuntimeException("Record not found with id: $id") }
+            .orElseThrow {
+                ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found with id: $id")
+            }
     }
 
     fun saveRecord(inputForm: InputForm): BikeFittingRecord {
+        inputForm.validateForSubmit()
         // Save the record with collision retry logic
         var savedEntity = saveWithRetry(inputForm)
 
@@ -100,12 +109,17 @@ class BikeFittingService(
 
     fun getPdfDownloadData(id: String): PdfDownloadData {
         val record = bikeFittingRepository.findById(id)
-            .orElseThrow { RuntimeException("Record not found with id: $id") }
+            .orElseThrow {
+                ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found with id: $id")
+            }
+        val pdfBytes = record.pdfFile
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "PDF file not found for this record")
 
+        val zone = ZoneId.systemDefault()
         return PdfDownloadData(
             fullName = record.fullName,
-            date = record.date,
-            pdfFile = record.pdfFile,
+            date = record.date.atZone(zone).toLocalDate(),
+            pdfFile = pdfBytes,
         )
     }
 
@@ -114,7 +128,9 @@ class BikeFittingService(
 
         // Get the existing record
         val existingRecord = bikeFittingRepository.findById(id)
-            .orElseThrow { RuntimeException("Record not found with id: $id") }
+            .orElseThrow {
+                ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found with id: $id")
+            }
 
         try {
             // Extract the InputForm from the stored jsonForm
@@ -131,9 +147,10 @@ class BikeFittingService(
             logger.info("PDF regenerated and saved successfully for record ID: $id")
 
             // Return the new PDF data
+            val zone = ZoneId.systemDefault()
             return PdfDownloadData(
                 fullName = updatedRecord.fullName,
-                date = updatedRecord.date,
+                date = updatedRecord.date.atZone(zone).toLocalDate(),
                 pdfFile = newPdfBytes,
             )
         } catch (e: Exception) {

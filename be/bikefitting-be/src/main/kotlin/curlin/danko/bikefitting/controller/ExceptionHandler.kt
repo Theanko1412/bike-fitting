@@ -4,10 +4,12 @@ import curlin.danko.bikefitting.model.dto.ApiError
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.server.ResponseStatusException
 
 @RestControllerAdvice
 class ExceptionHandler {
@@ -52,6 +54,29 @@ class ExceptionHandler {
             message = ex.message ?: "Invalid input provided",
             timestamp = java.time.LocalDateTime.now().toString(),
             route = request.requestURI,
+        )
+    }
+
+    /**
+     * Must run before [handleException]: otherwise [Exception] would map 404/4xx to 500.
+     */
+    @ExceptionHandler(ResponseStatusException::class)
+    fun handleResponseStatusException(
+        ex: ResponseStatusException,
+        request: HttpServletRequest,
+    ): ResponseEntity<ApiError> {
+        val status = HttpStatus.resolve(ex.statusCode.value()) ?: HttpStatus.INTERNAL_SERVER_ERROR
+        if (status.is5xxServerError) {
+            logger.error("ResponseStatusException at ${request.requestURI}", ex)
+        } else {
+            logger.warn("ResponseStatusException at ${request.requestURI}: ${ex.reason}")
+        }
+        return ResponseEntity.status(ex.statusCode).body(
+            ApiError(
+                message = ex.reason ?: status.reasonPhrase,
+                timestamp = java.time.LocalDateTime.now().toString(),
+                route = request.requestURI,
+            ),
         )
     }
 

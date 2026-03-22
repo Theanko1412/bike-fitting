@@ -1,10 +1,10 @@
 package curlin.danko.bikefitting.model.dto
 
-import java.time.LocalDate
+import java.time.Instant
 
 data class BikeFittingRecord(
     val id: String,
     val fullName: String,
-    val date: LocalDate,
+    val date: Instant,
     val hasFile: Boolean,
 )

@@ -14,7 +14,9 @@ import {
 } from "lucide-react";
 import React from "react";
 import { toast } from "sonner";
+import { PageHeader } from "../components/page-header";
 import { Button } from "../components/ui/button";
+import { BikeSideDiagramCard } from "../components/diagram/BikeSideDiagramCard";
 import {
 	Card,
 	CardContent,
@@ -22,8 +24,13 @@ import {
 	CardTitle,
 } from "../components/ui/card";
 import { Dialog, DialogContent, DialogTitle } from "../components/ui/dialog";
-import { formatDate } from "../lib/utils";
+import { formatDate, normalizeCalendarDateString } from "../lib/utils";
 import { BikeFittingService } from "../services/bikeFittingService";
+
+/** Dedupes auto PDF download side effects (e.g. React Strict Mode double invoke). */
+const pdfAutoDownloadHandled = new Set<string>();
+
+const recordLoadErrorToastShown = new Set<string>();
 
 export default function ViewPage() {
 	const { id } = useParams({ strict: false });
@@ -32,6 +39,11 @@ export default function ViewPage() {
 		title: string;
 	} | null>(null);
 	const [shouldFetchPdf, setShouldFetchPdf] = React.useState(false);
+
+	React.useEffect(() => {
+		pdfAutoDownloadHandled.clear();
+		recordLoadErrorToastShown.clear();
+	}, [id]);
 
 	const {
 		data: record,
@@ -43,29 +55,36 @@ export default function ViewPage() {
 			if (!id) {
 				throw new Error("Record ID is required");
 			}
-
-			try {
-				return await BikeFittingService.getRecordById(id);
-			} catch (error) {
-				// Only show error toast for API failures
-				toast.error("Failed to load record", {
-					description:
-						error instanceof Error
-							? error.message
-							: "An unexpected error occurred",
-					duration: 5000,
-				});
-				throw error;
-			}
+			return await BikeFittingService.getRecordById(id);
 		},
 		enabled: !!id,
-		// Optimized caching for immutable records with large image data
-		staleTime: 12 * 60 * 60 * 1000, // 12 hours - records never change once created
-		gcTime: 30 * 60 * 1000, // 30 minutes - cleanup unused records to manage memory
-		retry: 1, // Only retry once for failed requests
-		refetchOnWindowFocus: false, // Don't refetch when window gains focus
-		refetchOnReconnect: false, // Don't refetch when network reconnects
+		// Records are immutable; hard refresh if something ever changes on the server
+		staleTime: 12 * 60 * 60 * 1000, // 12 hours
+		gcTime: 30 * 60 * 1000,
+		retry: 1,
+		refetchOnWindowFocus: false,
+		refetchOnReconnect: false,
 	});
+
+	React.useEffect(() => {
+		if (!error) {
+			recordLoadErrorToastShown.clear();
+		}
+	}, [error]);
+
+	React.useEffect(() => {
+		if (!error || !id) return;
+		const key = `${id}:${error instanceof Error ? error.message : String(error)}`;
+		if (recordLoadErrorToastShown.has(key)) return;
+		recordLoadErrorToastShown.add(key);
+		toast.error("Failed to load record", {
+			description:
+				error instanceof Error
+					? error.message
+					: "An unexpected error occurred",
+			duration: 5000,
+		});
+	}, [error, id]);
 
 	// Cached PDF blob query - only enabled when download is requested
 	const {
@@ -80,10 +99,9 @@ export default function ViewPage() {
 			}
 			return await BikeFittingService.fetchPdfBlob(id);
 		},
-		enabled: !!id && !!record?.pdfFile && shouldFetchPdf, // Only fetch when explicitly requested
-		// Aggressive caching for immutable PDF files
-		staleTime: 24 * 60 * 60 * 1000, // 24 hours - PDFs never change
-		gcTime: 10 * 60 * 1000, // 10 minutes - cleanup to manage memory (PDFs can be large)
+		enabled: !!id && !!record?.hasFile && shouldFetchPdf, // Only fetch when explicitly requested
+		staleTime: 24 * 60 * 60 * 1000, // 24 hours — PDFs are effectively immutable
+		gcTime: 10 * 60 * 1000, // cleanup to manage memory (PDFs can be large)
 		retry: 1, // Only retry once for failed requests
 		refetchOnWindowFocus: false, // Don't refetch when window gains focus
 		refetchOnReconnect: false, // Don't refetch when network reconnects
@@ -91,36 +109,63 @@ export default function ViewPage() {
 
 	// Auto-download when PDF data becomes available after being requested
 	React.useEffect(() => {
-		if (shouldFetchPdf && !isPdfLoading && record) {
-			if (pdfData) {
-				// PDF fetch succeeded - trigger download
-				try {
-					let filename = pdfData.filename;
+		if (!shouldFetchPdf || isPdfLoading || !record || !id) return;
 
-					// Generate fallback filename if needed (same logic as backend)
-					if (!filename || filename === "bike-fitting-report.pdf") {
-						const cleanFullName = record.fullName.replace(/ /g, ""); // Remove all spaces
-						const dateString = record.date; // Already in yyyy-mm-dd format
-						filename = `${cleanFullName}-${dateString}-bike-fitting-report.pdf`;
-					}
+		if (pdfData) {
+			const dedupeKey = `${id}:pdf-success:${pdfData.blob.size}:${pdfData.filename}`;
+			if (pdfAutoDownloadHandled.has(dedupeKey)) return;
+			pdfAutoDownloadHandled.add(dedupeKey);
 
-					// Create download using cached blob
-					const downloadUrl = window.URL.createObjectURL(pdfData.blob);
-					const link = document.createElement("a");
-					link.href = downloadUrl;
-					link.download = filename;
-					document.body.appendChild(link);
-					link.click();
+			try {
+				let filename = pdfData.filename;
 
-					// Cleanup
-					document.body.removeChild(link);
-					window.URL.revokeObjectURL(downloadUrl);
+				if (!filename || filename === "bike-fitting-report.pdf") {
+					const cleanFullName = record.fullName.replace(/ /g, "");
+					const dateString = normalizeCalendarDateString(record.date);
+					filename = `${cleanFullName}-${dateString}-bike-fitting-report.pdf`;
+				}
 
+				const downloadUrl = window.URL.createObjectURL(pdfData.blob);
+				const link = document.createElement("a");
+				link.href = downloadUrl;
+				link.download = filename;
+				document.body.appendChild(link);
+				link.click();
+
+				document.body.removeChild(link);
+				window.URL.revokeObjectURL(downloadUrl);
+
+				toast.success("PDF downloaded successfully", {
+					description: "The bike fitting report has been downloaded",
+					duration: 3000,
+				});
+			} catch (error) {
+				pdfAutoDownloadHandled.delete(dedupeKey);
+				toast.error("Failed to download PDF", {
+					description:
+						error instanceof Error
+							? error.message
+							: "An unexpected error occurred while downloading the PDF",
+					duration: 5000,
+				});
+			}
+		} else if (pdfError) {
+			const dedupeKey = `${id}:pdf-fallback`;
+			if (pdfAutoDownloadHandled.has(dedupeKey)) return;
+			pdfAutoDownloadHandled.add(dedupeKey);
+
+			BikeFittingService.downloadPdf(record.id, {
+				fullName: record.fullName,
+				date: record.date,
+			})
+				.then(() => {
 					toast.success("PDF downloaded successfully", {
 						description: "The bike fitting report has been downloaded",
 						duration: 3000,
 					});
-				} catch (error) {
+				})
+				.catch((error) => {
+					pdfAutoDownloadHandled.delete(dedupeKey);
 					toast.error("Failed to download PDF", {
 						description:
 							error instanceof Error
@@ -128,34 +173,12 @@ export default function ViewPage() {
 								: "An unexpected error occurred while downloading the PDF",
 						duration: 5000,
 					});
-				}
-			} else if (pdfError) {
-				// PDF fetch failed - fall back to direct download
-				BikeFittingService.downloadPdf(record.id, {
-					fullName: record.fullName,
-					date: record.date,
-				})
-					.then(() => {
-						toast.success("PDF downloaded successfully", {
-							description: "The bike fitting report has been downloaded",
-							duration: 3000,
-						});
-					})
-					.catch((error) => {
-						toast.error("Failed to download PDF", {
-							description:
-								error instanceof Error
-									? error.message
-									: "An unexpected error occurred while downloading the PDF",
-							duration: 5000,
-						});
-					});
-			}
+				});
 		}
-	}, [shouldFetchPdf, pdfData, isPdfLoading, pdfError, record]);
+	}, [shouldFetchPdf, pdfData, isPdfLoading, pdfError, record, id]);
 
 	const handleDownload = async () => {
-		if (!record?.pdfFile) {
+		if (!record?.hasFile) {
 			toast.warning("No file available for download", {
 				description: "This record does not have an associated PDF file",
 				duration: 5000,
@@ -172,7 +195,7 @@ export default function ViewPage() {
 				// Generate fallback filename if needed (same logic as backend)
 				if (!filename || filename === "bike-fitting-report.pdf") {
 					const cleanFullName = record.fullName.replace(/ /g, ""); // Remove all spaces
-					const dateString = record.date; // Already in yyyy-mm-dd format
+					const dateString = normalizeCalendarDateString(record.date);
 					filename = `${cleanFullName}-${dateString}-bike-fitting-report.pdf`;
 				}
 
@@ -250,7 +273,7 @@ export default function ViewPage() {
 
 		try {
 			// Format date for filename (YYYY-MM-DD)
-			const dateStr = new Date(record!.date).toISOString().split("T")[0];
+			const dateStr = normalizeCalendarDateString(record!.date);
 			const cleanName = record!.fullName.replace(/\s+/g, "");
 			const filename = `${cleanName}-${dateStr}-${imageType}.jpg`;
 
@@ -270,62 +293,16 @@ export default function ViewPage() {
 		}
 	};
 
-	const convertToCSV = (data: any) => {
-		// Exclude image fields and fitter object from CSV export
-		const excludeFields = [
-			"initialRiderPhoto",
-			"finalRiderPhoto",
-			"forwardSpinalFlexionPhoto",
-			"fitter",
-		];
-		const filteredData = Object.fromEntries(
-			Object.entries(data).filter(([key]) => !excludeFields.includes(key)),
-		);
-
-		// Add fitterFullName from the record level (not from fitter object)
-		if (record?.fitterFullName) {
-			filteredData.fitterFullName = record.fitterFullName;
-		}
-
-		// Create CSV headers and values
-		const headers = Object.keys(filteredData);
-		const values = Object.values(filteredData).map((value) => {
-			// Handle values that might contain commas or quotes
-			if (
-				typeof value === "string" &&
-				(value.includes(",") || value.includes('"'))
-			) {
-				return `"${value.replace(/"/g, '""')}"`;
-			}
-			return value || "";
-		});
-
-		return `${headers.join(",")}\n${values.join(",")}`;
-	};
-
-	const downloadCSVData = () => {
+	const downloadCSVData = async () => {
 		if (!record) return;
 
 		try {
-			const csvData = convertToCSV(record.jsonForm);
-
-			// Format date for filename (YYYY-MM-DD)
-			const dateStr = new Date(record.date).toISOString().split("T")[0];
-			const cleanName = record.fullName.replace(/\s+/g, "");
-			const filename = `${cleanName}-${dateStr}-bike-fitting.csv`;
-
-			const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
-			const link = document.createElement("a");
-			link.href = URL.createObjectURL(blob);
-			link.download = filename;
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
-
+			await BikeFittingService.downloadRecordCsv(record.id);
 			toast.success("CSV file downloaded successfully");
 		} catch (error) {
 			toast.error("Failed to download CSV file", {
-				description: "Could not download CSV data",
+				description:
+					error instanceof Error ? error.message : "Could not download CSV data",
 				duration: 5000,
 			});
 		}
@@ -338,8 +315,7 @@ export default function ViewPage() {
 			// Keep JSON as raw form data (as received on frontend)
 			const jsonString = JSON.stringify(record.jsonForm, null, 2);
 
-			// Format date for filename (YYYY-MM-DD)
-			const dateStr = new Date(record.date).toISOString().split("T")[0];
+			const dateStr = normalizeCalendarDateString(record.date);
 			const cleanName = record.fullName.replace(/\s+/g, "");
 			const filename = `${cleanName}-${dateStr}-bike-fitting.json`;
 
@@ -445,26 +421,21 @@ export default function ViewPage() {
 	return (
 		<div className="min-h-screen bg-background text-foreground p-4">
 			<div className="max-w-4xl mx-auto space-y-6">
-				{/* Header */}
-				<div className="flex items-center justify-between">
-					<div className="flex items-center gap-4">
-						<Button variant="outline" asChild>
-							<Link to="/search">
-								<ArrowLeft className="h-4 w-4" />
-							</Link>
+				<PageHeader
+					backTo="/search"
+					title="Bike Fitting Record"
+					right={
+						<Button
+							variant="default"
+							onClick={handleDownload}
+							disabled={!record.hasFile}
+							className="flex items-center gap-2"
+						>
+							<Download className="h-4 w-4" />
+							PDF
 						</Button>
-						<h1 className="text-2xl font-bold">Bike Fitting Record</h1>
-					</div>
-					<Button
-						variant="default"
-						onClick={handleDownload}
-						disabled={!record.pdfFile}
-						className="flex items-center gap-2"
-					>
-						<Download className="h-4 w-4" />
-						PDF
-					</Button>
-				</div>
+					}
+				/>
 
 				{/* Client Information */}
 				<Card>
@@ -707,6 +678,14 @@ export default function ViewPage() {
 						<CardTitle>Detailed Measurements</CardTitle>
 					</CardHeader>
 					<CardContent className="space-y-6">
+						{/* 3D measurement highlight POC */}
+						<BikeSideDiagramCard
+							bikeType={
+								/* Prefer initial bike type — final often still default "Road" while bikeType is correct */
+								formData.bikeType ?? formData.finalBikeType ?? "Road"
+							}
+						/>
+
 						{/* Full Body Assessment */}
 						<div>
 							<h3 className="text-lg font-semibold mb-4">
@@ -1223,7 +1202,7 @@ export default function ViewPage() {
 						<div className="flex flex-wrap gap-2">
 							<Button
 								onClick={handleDownload}
-								disabled={!record.pdfFile}
+								disabled={!record.hasFile}
 								className="flex items-center gap-2"
 							>
 								<FileText className="h-4 w-4" />
@@ -1246,7 +1225,7 @@ export default function ViewPage() {
 								Download JSON
 							</Button>
 						</div>
-						{!record.pdfFile && (
+						{!record.hasFile && (
 							<p className="text-sm text-muted-foreground mt-2">
 								PDF report not available for this record
 							</p>

@@ -2,6 +2,7 @@ package curlin.danko.bikefitting.model.dao
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import curlin.danko.bikefitting.model.dto.BikeFittingRecord
+import curlin.danko.bikefitting.model.dto.BikeFittingRecordDetail
 import curlin.danko.bikefitting.model.dto.InputForm
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -10,6 +11,7 @@ import jakarta.persistence.Lob
 import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
+import java.time.Instant
 import java.time.LocalDate
 
 @Entity
@@ -22,8 +24,9 @@ data class BikeFittingDAO(
     val fullName: String,
     @Column(name = "fitter_full_name", nullable = false)
     val fitterFullName: String,
+    /** Session instant: selected calendar date + wall-clock time at save (for ordering). */
     @Column(name = "date", nullable = false)
-    val date: LocalDate,
+    val date: Instant,
     @Column(name = "submission_date", nullable = false)
     val submissionDate: LocalDate = LocalDate.now(),
     @JdbcTypeCode(SqlTypes.JSON)
@@ -71,6 +74,18 @@ fun BikeFittingDAO.toRecord(): BikeFittingRecord {
         fullName = this.fullName,
         date = this.date,
         hasFile = this.pdfFile != null,
+    )
+}
+
+fun BikeFittingDAO.toRecordDetail(): BikeFittingRecordDetail {
+    return BikeFittingRecordDetail(
+        id = id,
+        fullName = fullName,
+        fitterFullName = fitterFullName,
+        date = date,
+        submissionDate = submissionDate,
+        jsonForm = jsonForm,
+        hasFile = pdfFile != null,
     )
 }
 

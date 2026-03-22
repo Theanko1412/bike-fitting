@@ -29,6 +29,11 @@ class SecurityConfig(
                 authz
                     // Allow authentication endpoints
                     .requestMatchers("/api/auth/**").permitAll()
+                    // CORS preflight must not require ADMIN
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                    // CSV mass export and fitter list (ADMIN only) — match by path so all methods are covered
+                    .requestMatchers("/api/fitters").hasRole("ADMIN")
+                    .requestMatchers("/api/exports").hasRole("ADMIN")
                     // Allow all GET requests to general users
                     .requestMatchers(HttpMethod.GET, "/api/records/**").authenticated()
                     // Allow POST to form submission for all authenticated users

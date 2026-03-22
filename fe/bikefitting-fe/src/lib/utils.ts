@@ -7,6 +7,34 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Normalize API date strings to YYYY-MM-DD (local calendar day).
+ * Handles ISO instants (e.g. from backend) and plain yyyy-mm-dd.
+ */
+export function normalizeCalendarDateString(input: string): string {
+	if (!input) return "";
+	if (input.includes("T") || input.endsWith("Z")) {
+		const d = new Date(input);
+		if (isNaN(d.getTime())) return input;
+		const y = d.getFullYear();
+		const mo = String(d.getMonth() + 1).padStart(2, "0");
+		const da = String(d.getDate()).padStart(2, "0");
+		return `${y}-${mo}-${da}`;
+	}
+	const m = input.match(/^(\d{4}-\d{2}-\d{2})/);
+	if (m) return m[1];
+	try {
+		const d = new Date(input);
+		if (isNaN(d.getTime())) return input;
+		const y = d.getFullYear();
+		const mo = String(d.getMonth() + 1).padStart(2, "0");
+		const da = String(d.getDate()).padStart(2, "0");
+		return `${y}-${mo}-${da}`;
+	} catch {
+		return input;
+	}
+}
+
+/**
  * Format a date to the consistent format used throughout the app: "July 6th, 2025"
  * @param date - Date object, string, or number to format
  * @returns Formatted date string
@@ -15,6 +43,24 @@ export function formatDate(date: Date | string | number): string {
 	if (!date) return "";
 
 	try {
+		if (typeof date === "string") {
+			if (date.includes("T") || date.endsWith("Z")) {
+				const dateObj = new Date(date);
+				if (!isNaN(dateObj.getTime())) {
+					return format(dateObj, "PPP");
+				}
+			}
+			const m = date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+			if (m) {
+				const y = Number(m[1]);
+				const mo = Number(m[2]);
+				const d = Number(m[3]);
+				const local = new Date(y, mo - 1, d);
+				if (!isNaN(local.getTime())) {
+					return format(local, "PPP");
+				}
+			}
+		}
 		const dateObj =
 			typeof date === "string" || typeof date === "number"
 				? new Date(date)
