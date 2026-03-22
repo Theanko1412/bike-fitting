@@ -34,7 +34,7 @@ export const SIDE_LINE_SET: DiagramLineSet = {
 		},
 		{
 			id: "saddleHeight",
-			label: "Saddle height (POC)",
+			label: "Saddle height",
 			hint: "Bottom bracket → saddle (along seat tube)",
 			x1: 42,
 			y1: 57,
@@ -89,7 +89,7 @@ export const FRONT_RIGHT_LINE_SET: DiagramLineSet = {
 		},
 		{
 			id: "saddleHeight",
-			label: "Saddle height (POC)",
+			label: "Saddle height",
 			hint: "Bottom bracket → saddle (along seat tube)",
 			x1: 46,
 			y1: 58,
@@ -141,7 +141,7 @@ export const ANGLED_LINE_SET: DiagramLineSet = {
 		},
 		{
 			id: "saddleHeight",
-			label: "Saddle height (POC)",
+			label: "Saddle height",
 			hint: "Bottom bracket → saddle (along seat tube)",
 			x1: 44,
 			y1: 58,

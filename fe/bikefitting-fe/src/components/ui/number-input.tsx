@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "./button";
 import { Input } from "./input";
 import { Label } from "./label";
@@ -27,18 +27,18 @@ export const NumberInput = ({
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const val = e.target.value;
-		
+
 		// Allow empty string while typing
 		if (val === "") {
 			setInputValue("");
 			return;
 		}
-		
+
 		// Only allow numeric input (digits only)
 		if (!/^\d*$/.test(val)) {
 			return; // Prevent non-numeric input
 		}
-		
+
 		const numValue = Number.parseFloat(val);
 		if (!isNaN(numValue)) {
 			// If value exceeds max, clamp it immediately
@@ -47,7 +47,7 @@ export const NumberInput = ({
 				onChange(max);
 				return;
 			}
-			
+
 			// Allow values below min while typing (so user can type multi-digit numbers)
 			// We'll enforce min on blur
 			setInputValue(val);

@@ -52,11 +52,12 @@ const baseUrl = () => import.meta.env.BASE_URL;
  * Model folder under `public/assets/bikes/<category>/<model>/masked/`.
  * Must match your disk layout for each bike type.
  */
-export const BIKE_DIAGRAM_ASSET_SUBFOLDER: Record<BikeDiagramCategory, string> = {
-	road: "tarmacSL8pro",
-	gravel: "s-worksTurboCreo",
-	mountain: "s-worksEpic8",
-};
+export const BIKE_DIAGRAM_ASSET_SUBFOLDER: Record<BikeDiagramCategory, string> =
+	{
+		road: "tarmacSL8pro",
+		gravel: "s-worksTurboCreo",
+		mountain: "s-worksEpic8",
+	};
 
 function assetsRootForCategory(category: BikeDiagramCategory): string {
 	const b = baseUrl();
@@ -119,7 +120,9 @@ export function getBikeDiagramSlides(
 	];
 }
 
-export function bikeDiagramCategoryLabel(category: BikeDiagramCategory): string {
+export function bikeDiagramCategoryLabel(
+	category: BikeDiagramCategory,
+): string {
 	switch (category) {
 		case "gravel":
 			return "Gravel";

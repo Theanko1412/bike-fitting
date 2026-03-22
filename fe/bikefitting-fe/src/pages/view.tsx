@@ -14,9 +14,9 @@ import {
 } from "lucide-react";
 import React from "react";
 import { toast } from "sonner";
+import { BikeSideDiagramCard } from "../components/diagram/BikeSideDiagramCard";
 import { PageHeader } from "../components/page-header";
 import { Button } from "../components/ui/button";
-import { BikeSideDiagramCard } from "../components/diagram/BikeSideDiagramCard";
 import {
 	Card,
 	CardContent,
@@ -79,9 +79,7 @@ export default function ViewPage() {
 		recordLoadErrorToastShown.add(key);
 		toast.error("Failed to load record", {
 			description:
-				error instanceof Error
-					? error.message
-					: "An unexpected error occurred",
+				error instanceof Error ? error.message : "An unexpected error occurred",
 			duration: 5000,
 		});
 	}, [error, id]);
@@ -302,7 +300,9 @@ export default function ViewPage() {
 		} catch (error) {
 			toast.error("Failed to download CSV file", {
 				description:
-					error instanceof Error ? error.message : "Could not download CSV data",
+					error instanceof Error
+						? error.message
+						: "Could not download CSV data",
 				duration: 5000,
 			});
 		}
@@ -678,7 +678,6 @@ export default function ViewPage() {
 						<CardTitle>Detailed Measurements</CardTitle>
 					</CardHeader>
 					<CardContent className="space-y-6">
-						{/* 3D measurement highlight POC */}
 						<BikeSideDiagramCard
 							bikeType={
 								/* Prefer initial bike type — final often still default "Road" while bikeType is correct */

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Button } from "./button";
 import {
 	Dialog,
@@ -32,7 +32,7 @@ export const HybridSelector = ({
 	const [pendingValue, setPendingValue] = useState<number | null>(null);
 
 	const isNumericMode = typeof value === "number";
-	
+
 	// Memoize min/max calculations to avoid recalculating on every render
 	const { min, max } = useMemo(() => {
 		if (!isNumericMode || options.length === 0) {

@@ -87,9 +87,7 @@ export function SubmissionDateRangePicker({
 						if (!range) return;
 						if (range.from) {
 							const fromStr = format(range.from, "yyyy-MM-dd");
-							const toStr = range.to
-								? format(range.to, "yyyy-MM-dd")
-								: fromStr;
+							const toStr = range.to ? format(range.to, "yyyy-MM-dd") : fromStr;
 							onChange(fromStr, toStr);
 						}
 						if (range.from && range.to) {

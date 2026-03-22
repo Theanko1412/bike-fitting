@@ -15,6 +15,7 @@ import { SubmissionDateRangePicker } from "../components/export-submission-date-
 import { PageHeader } from "../components/page-header";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
+import { Checkbox } from "../components/ui/checkbox";
 import {
 	Dialog,
 	DialogContent,
@@ -22,13 +23,12 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "../components/ui/dialog";
-import { Checkbox } from "../components/ui/checkbox";
 import { Label } from "../components/ui/label";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { cn } from "../lib/utils";
 import {
-	BikeFittingService,
 	type BikeFittingExportSummary,
+	BikeFittingService,
 } from "../services/bikeFittingService";
 
 const EXPORTS_PAGE_SIZE = 20;
@@ -202,10 +202,7 @@ export default function ExportPage() {
 								className="gap-2"
 							>
 								<RefreshCw
-									className={cn(
-										"h-4 w-4",
-										exportsRefetching && "animate-spin",
-									)}
+									className={cn("h-4 w-4", exportsRefetching && "animate-spin")}
 								/>
 								Refresh
 							</Button>
@@ -324,7 +321,9 @@ export default function ExportPage() {
 								Leave none selected to include every fitter.
 							</p>
 							{fittersQuery.isLoading && (
-								<p className="text-sm text-muted-foreground">Loading fitters…</p>
+								<p className="text-sm text-muted-foreground">
+									Loading fitters…
+								</p>
 							)}
 							{fittersQuery.isError && (
 								<p className="text-sm text-destructive">
@@ -423,7 +422,8 @@ function ExportHistoryRow({ item }: { item: BikeFittingExportSummary }) {
 				<span
 					className={cn(
 						"text-xs uppercase shrink-0 px-2 py-0.5 rounded",
-						item.status === "COMPLETED" && "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200",
+						item.status === "COMPLETED" &&
+							"bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200",
 						item.status === "FAILED" && "bg-destructive/15 text-destructive",
 						item.status === "RUNNING" && "bg-muted text-muted-foreground",
 					)}
@@ -433,7 +433,9 @@ function ExportHistoryRow({ item }: { item: BikeFittingExportSummary }) {
 			</div>
 			<div className="text-muted-foreground text-xs pl-6 space-y-0.5">
 				<div>Started: {formatInstant(item.startedAt)}</div>
-				{item.completedAt && <div>Finished: {formatInstant(item.completedAt)}</div>}
+				{item.completedAt && (
+					<div>Finished: {formatInstant(item.completedAt)}</div>
+				)}
 				{duration && <div>Duration: {duration}</div>}
 				{item.rowCount != null && <div>Rows: {item.rowCount}</div>}
 				<div>
@@ -442,16 +444,16 @@ function ExportHistoryRow({ item }: { item: BikeFittingExportSummary }) {
 						? "All"
 						: item.filterFitters.join(", ")}
 				</div>
-				{item.requestedByUsername && (
-					<div>By: {item.requestedByUsername}</div>
-				)}
+				{item.requestedByUsername && <div>By: {item.requestedByUsername}</div>}
 				{item.suggestedFilename && (
 					<div className="truncate" title={item.suggestedFilename}>
 						File: {item.suggestedFilename}
 					</div>
 				)}
 				{item.errorMessage && (
-					<div className="text-destructive break-words">{item.errorMessage}</div>
+					<div className="text-destructive break-words">
+						{item.errorMessage}
+					</div>
 				)}
 			</div>
 		</div>

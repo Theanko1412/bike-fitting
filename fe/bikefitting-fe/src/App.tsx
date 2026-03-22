@@ -72,7 +72,11 @@ function App() {
 								</PopoverTrigger>
 								<PopoverContent className="w-48 p-1" align="center">
 									<div className="flex flex-col gap-0.5">
-										<Button variant="ghost" className="h-10 w-full justify-start" asChild>
+										<Button
+											variant="ghost"
+											className="h-10 w-full justify-start"
+											asChild
+										>
 											<Link to="/form" onClick={() => setFormMenuOpen(false)}>
 												Bike Fitting
 											</Link>

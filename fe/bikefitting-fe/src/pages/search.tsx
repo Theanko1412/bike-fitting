@@ -18,8 +18,8 @@ import {
 import { formatDate } from "../lib/utils";
 import {
 	type BikeFittingRecord,
-	type RecordsSortDirection,
 	BikeFittingService,
+	type RecordsSortDirection,
 } from "../services/bikeFittingService";
 
 const ITEMS_PER_PAGE = 50;
@@ -86,9 +86,7 @@ export default function SearchPage() {
 		searchFetchErrorToastShown.add(key);
 		toast.error("Failed to fetch records", {
 			description:
-				error instanceof Error
-					? error.message
-					: "An unexpected error occurred",
+				error instanceof Error ? error.message : "An unexpected error occurred",
 			duration: 5000,
 		});
 	}, [isError, error, debouncedSearchTerm, sortDirection]);

@@ -17,8 +17,8 @@ import {
 } from "@/config/bike-diagram-assets";
 import type { DiagramLineSet, LineDef } from "@/config/bike-diagram-lines";
 import {
-	getLineSetForAngle,
 	MEASUREMENT_ROWS,
+	getLineSetForAngle,
 } from "@/config/bike-diagram-lines";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -265,7 +265,9 @@ export function BikeSideDiagramCard({ bikeType }: BikeSideDiagramCardProps) {
 									className={cn(
 										"w-full text-left rounded-md border border-border px-3 py-2 transition-colors",
 										"hover:bg-accent/50 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-										isActive ? "bg-primary/10 border-primary/60" : "bg-transparent",
+										isActive
+											? "bg-primary/10 border-primary/60"
+											: "bg-transparent",
 									)}
 								>
 									<div className="text-sm font-medium">{row.label}</div>
