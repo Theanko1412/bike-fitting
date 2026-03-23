@@ -1,6 +1,6 @@
 FROM eclipse-temurin:21-jdk
 
-COPY be/bikefitting-be/*.jar app.jar
+COPY be/bikefitting-be/*.jar /app.jar
 
 ENTRYPOINT ["java", "-jar", "/app.jar"]
 
