@@ -1,6 +1,6 @@
-FROM eclipse-temurin:21-jdk-jammy
+FROM amazoncorretto:21-alpine-jdk
 
-COPY be/bikefitting-be/build/libs/*.jar /app.jar
+COPY be/bikefitting-be/*.jar /app.jar
 
 ENTRYPOINT ["java", "-jar", "/app.jar"]
 
